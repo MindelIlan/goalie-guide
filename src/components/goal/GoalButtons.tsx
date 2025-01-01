@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, List, X } from "lucide-react";
+import { Eye, EyeOff, Users, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface GoalButtonsProps {
@@ -41,7 +41,7 @@ export const GoalButtons = ({
             onClick={onToggleSimilar}
             className="text-sm text-primary hover:text-primary/80 hover:bg-primary/10"
           >
-            {showSimilar ? <X className="h-4 w-4" /> : <List className="h-4 w-4" />}
+            {showSimilar ? <X className="h-4 w-4" /> : <Users className="h-4 w-4" />}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
