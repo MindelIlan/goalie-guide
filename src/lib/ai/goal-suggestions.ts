@@ -27,14 +27,23 @@ export const generateGoalSuggestions = async (description: string): Promise<Goal
       throw new Error("No response from OpenAI");
     }
 
-    const parsedResponse = JSON.parse(response);
-    return parsedResponse.goals.map((goal: any) => ({
-      title: goal.title,
-      description: goal.description,
-      target_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days from now
-      tags: goal.tags || [],
-      progress: 0
-    }));
+    try {
+      const parsedResponse = JSON.parse(response);
+      if (!parsedResponse.goals || !Array.isArray(parsedResponse.goals)) {
+        throw new Error("Invalid response format from OpenAI");
+      }
+
+      return parsedResponse.goals.map((goal: any) => ({
+        title: goal.title || "Untitled Goal",
+        description: goal.description || "",
+        target_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days from now
+        tags: Array.isArray(goal.tags) ? goal.tags : [],
+        progress: 0
+      }));
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error("Failed to parse OpenAI response");
+    }
 
   } catch (error) {
     console.error('Goal suggestion error:', error);

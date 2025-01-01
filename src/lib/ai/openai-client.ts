@@ -29,6 +29,16 @@ export const getOpenAIClient = async () => {
       throw new Error("OpenAI API key not found");
     }
 
+    // Verify that the key starts with "sk-" as all OpenAI API keys do
+    if (!data.secret.startsWith('sk-')) {
+      toast({
+        title: "Invalid API Key",
+        description: "The OpenAI API key appears to be invalid. It should start with 'sk-'.",
+        variant: "destructive",
+      });
+      throw new Error("Invalid OpenAI API key format");
+    }
+
     return new OpenAI({
       apiKey: data.secret,
       dangerouslyAllowBrowser: true
