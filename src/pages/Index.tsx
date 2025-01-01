@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { GoalCard } from "@/components/GoalCard";
 import { useToast } from "@/components/ui/use-toast";
+import { Auth } from "@/components/Auth";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 interface Goal {
   id: number;
@@ -9,56 +13,138 @@ interface Goal {
   description: string;
   progress: number;
   targetDate: string;
+  user_id: string;
 }
 
 const Index = () => {
-  const [goals, setGoals] = useState<Goal[]>(() => {
-    // Initialize state from localStorage
-    const savedGoals = localStorage.getItem('goals');
-    return savedGoals ? JSON.parse(savedGoals) : [];
-  });
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [user, setUser] = useState(null);
   const { toast } = useToast();
 
-  // Save goals to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('goals', JSON.stringify(goals));
-  }, [goals]);
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchGoals(session.user.id);
+      }
+    });
 
-  const handleAddGoal = (newGoal: Omit<Goal, "id" | "progress">) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchGoals(session.user.id);
+      } else {
+        setGoals([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchGoals = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch goals",
+        variant: "destructive",
+      });
+    } else {
+      setGoals(data || []);
+    }
+  };
+
+  const handleAddGoal = async (newGoal: Omit<Goal, "id" | "progress" | "user_id">) => {
+    if (!user) return;
+
     const goal = {
       ...newGoal,
-      id: Date.now(),
       progress: 0,
+      user_id: user.id,
     };
-    setGoals([...goals, goal]);
-    toast({
-      title: "Goal Added",
-      description: "Your new goal has been added successfully!",
-    });
+
+    const { data, error } = await supabase
+      .from('goals')
+      .insert([goal])
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add goal",
+        variant: "destructive",
+      });
+    } else {
+      setGoals([...goals, data]);
+      toast({
+        title: "Success",
+        description: "Goal added successfully!",
+      });
+    }
   };
 
-  const handleDeleteGoal = (id: number) => {
-    setGoals(goals.filter((goal) => goal.id !== id));
-    toast({
-      title: "Goal Deleted",
-      description: "Your goal has been deleted.",
-    });
+  const handleDeleteGoal = async (id: number) => {
+    const { error } = await supabase
+      .from('goals')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete goal",
+        variant: "destructive",
+      });
+    } else {
+      setGoals(goals.filter((goal) => goal.id !== id));
+      toast({
+        title: "Success",
+        description: "Goal deleted successfully",
+      });
+    }
   };
 
-  const handleEditGoal = (id: number) => {
-    // To be implemented in the next iteration
+  const handleEditGoal = async (id: number) => {
     toast({
       title: "Coming Soon",
       description: "Goal editing will be available in the next update!",
     });
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+  };
+
+  if (!user) {
+    return <Auth />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-4xl">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">My 2024 Goals</h1>
+            <p className="text-gray-600">Welcome, {user.email}</p>
+          </div>
+          <Button variant="outline" onClick={handleSignOut} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">My 2024 Goals</h1>
-          <p className="text-gray-600 mb-6">Track and achieve your personal goals for the year</p>
           <AddGoalDialog onAddGoal={handleAddGoal} />
         </div>
 
