@@ -2,6 +2,35 @@ import { getOpenAIClient } from "./openai-client";
 import { Goal } from "@/types/goals";
 import { toast } from "@/components/ui/use-toast";
 
+export const testOpenAIConnection = async () => {
+  try {
+    const openai = await getOpenAIClient();
+    const completion = await openai.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: 'Say "OpenAI connection successful!" if you can read this message.' }
+      ],
+      model: 'gpt-4o-mini',
+    });
+
+    const response = completion.choices[0]?.message?.content;
+    console.log('OpenAI Test Response:', response);
+    toast({
+      title: "OpenAI Connection Test",
+      description: response || "No response received",
+    });
+    return response;
+  } catch (error) {
+    console.error('OpenAI connection test error:', error);
+    toast({
+      title: "Error",
+      description: "Failed to connect to OpenAI. Please check your API key.",
+      variant: "destructive",
+    });
+    throw error;
+  }
+};
+
 export const generateAIResponse = async (messages: any[], userGoals: Goal[]) => {
   try {
     const openai = await getOpenAIClient();

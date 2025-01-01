@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, Copy, CheckCircle2 } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { generateAIResponse } from "@/lib/ai/chat-service";
+import { generateAIResponse, testOpenAIConnection } from "@/lib/ai/chat-service";
 import { Message, Goal } from "@/types/goals";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,6 +28,12 @@ export const AIChat = ({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Test OpenAI connection when component mounts
+    testOpenAIConnection()
+      .catch(error => console.error('Failed to test OpenAI connection:', error));
+  }, []);
 
   const handleError = (error: Error) => {
     console.error('Chat Error:', error);
