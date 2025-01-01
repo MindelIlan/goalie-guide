@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Share2, ChevronDown, ChevronUp, CheckSquare, Clock, Calendar } from "lucide-react";
+import { Pencil, Trash2, Share2, Eye, EyeOff, List, ListOff, CheckSquare, Clock, Calendar } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
 import { SubgoalsList } from "./SubgoalsList";
 import { supabase } from "@/lib/supabase";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface GoalCardProps {
   goal: {
@@ -148,15 +149,21 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
         Target: {new Date(goal.target_date).toLocaleDateString()}
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setShowSubgoals(!showSubgoals)}
-        className="w-full mt-4 flex items-center justify-between hover:bg-gray-100"
-      >
-        {showSubgoals ? "Hide Subgoals" : "Show Subgoals"}
-        {showSubgoals ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSubgoals(!showSubgoals)}
+            className="w-full mt-4 flex items-center justify-center gap-2 hover:bg-gray-100"
+          >
+            {showSubgoals ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{showSubgoals ? "Hide Subgoals" : "Show Subgoals"}</p>
+        </TooltipContent>
+      </Tooltip>
 
       {showSubgoals && (
         <div className="mt-4 border-t pt-4">
@@ -165,14 +172,21 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
       )}
 
       <div className="mt-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowSimilar(!showSimilar)}
-          className="text-sm text-primary hover:text-primary/80 hover:bg-primary/10"
-        >
-          {showSimilar ? "Hide Similar Goals" : "Show Similar Goals"}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSimilar(!showSimilar)}
+              className="text-sm text-primary hover:text-primary/80 hover:bg-primary/10 flex items-center gap-2"
+            >
+              {showSimilar ? <ListOff className="h-4 w-4" /> : <List className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{showSimilar ? "Hide Similar Goals" : "Show Similar Goals"}</p>
+          </TooltipContent>
+        </Tooltip>
         {showSimilar && <SimilarGoals goalTitle={goal.title} />}
       </div>
 
