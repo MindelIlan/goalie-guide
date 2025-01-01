@@ -134,9 +134,16 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-4xl">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">My 2024 Goals</h1>
-            <p className="text-gray-600">Welcome, {user.email}</p>
+          <div className="flex items-center gap-4">
+            <img
+              src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=64&h=64&fit=crop"
+              alt="Goal Tracker Logo"
+              className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
+            />
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">My 2024 Goals</h1>
+              <p className="text-gray-600">Welcome, {user.email}</p>
+            </div>
           </div>
           <Button variant="outline" onClick={handleSignOut} className="gap-2">
             <LogOut className="h-4 w-4" />
