@@ -6,36 +6,82 @@ import { Loader2, Send } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { generateAIResponse } from "@/lib/ai/chat-service";
 import { Message, Goal } from "@/types/goals";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AIChatProps {
   messages: Message[];
-  setMessages: (messages: Message[]) => void;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   userGoals: Goal[];
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
 
-export const AIChat = ({ messages, setMessages, userGoals, isLoading, setIsLoading }: AIChatProps) => {
+export const AIChat = ({ 
+  messages, 
+  setMessages, 
+  userGoals, 
+  isLoading, 
+  setIsLoading 
+}: AIChatProps) => {
   const [input, setInput] = useState('');
+  const { toast } = useToast();
+
+  const handleError = (error: Error) => {
+    console.error('Chat Error:', error);
+    toast({
+      title: "Error",
+      description: "Failed to send message. Please try again.",
+      variant: "destructive",
+    });
+  };
+
+  const validateInput = (text: string): boolean => {
+    if (!text.trim()) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a message before sending.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages([...messages, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
+    
     try {
+      if (!validateInput(input) || isLoading) return;
+
+      const userMessage: Message = { 
+        role: 'user', 
+        content: input.trim() 
+      };
+
+      // Update messages optimistically
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+      setInput('');
+      setIsLoading(true);
+
       const response = await generateAIResponse([...messages, userMessage], userGoals);
+      
+      if (!response) {
+        throw new Error('No response received from AI service');
+      }
+
       const assistantMessage: Message = {
         role: 'assistant',
         content: response
       };
-      setMessages((prevMessages: Message[]) => [...prevMessages, assistantMessage]);
+
+      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+
     } catch (error) {
-      console.error('Error:', error);
+      handleError(error as Error);
+      // Rollback the optimistic update
+      setMessages(prevMessages => 
+        prevMessages.filter(msg => msg.content !== input.trim())
+      );
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +107,10 @@ export const AIChat = ({ messages, setMessages, userGoals, isLoading, setIsLoadi
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {goal.tags.map((tag, tagIndex) => (
-                              <span key={tagIndex} className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                              <span 
+                                key={tagIndex} 
+                                className="text-xs bg-gray-200 px-2 py-0.5 rounded-full"
+                              >
                                 {tag}
                               </span>
                             ))}
@@ -90,8 +139,13 @@ export const AIChat = ({ messages, setMessages, userGoals, isLoading, setIsLoadi
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask me about your goals..."
           disabled={isLoading}
+          aria-label="Message input"
         />
-        <Button type="submit" disabled={isLoading || !input.trim()}>
+        <Button 
+          type="submit" 
+          disabled={isLoading || !input.trim()}
+          aria-label="Send message"
+        >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
