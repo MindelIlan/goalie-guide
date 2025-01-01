@@ -56,18 +56,21 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          openai_api_key: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           description?: string | null
           id: string
+          openai_api_key?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          openai_api_key?: string | null
         }
         Relationships: []
       }
