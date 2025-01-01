@@ -55,7 +55,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
         // Transform the data to match our expected type
         const formattedGoals = goals.map(goal => ({
           ...goal,
-          profile: goal.profile
+          profile: Array.isArray(goal.profile) ? goal.profile[0] : goal.profile
         })) as SimilarGoal[];
         
         setSimilarGoals(formattedGoals);
