@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, Bot, X } from "lucide-react";
+import { Loader2, Send, Bot, X, Plus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +13,12 @@ import { ChatMessage } from "./ai/ChatMessage";
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  suggestedGoals?: {
+    title: string;
+    description: string;
+    target_date: string;
+    tags: string[];
+  }[];
 }
 
 interface Goal {
@@ -30,10 +36,29 @@ export const AIAssistant = () => {
   const [userGoals, setUserGoals] = useState<Goal[]>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [userDescription, setUserDescription] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserGoals();
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('description')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile?.description) {
+      setUserDescription(profile.description);
+      // Automatically suggest goals when profile is loaded
+      suggestGoalsBasedOnProfile(profile.description);
+    }
+  };
 
   const fetchUserGoals = async () => {
     const { data: goals, error } = await supabase
@@ -46,6 +71,108 @@ export const AIAssistant = () => {
     }
 
     setUserGoals(goals || []);
+  };
+
+  const suggestGoalsBasedOnProfile = async (description: string) => {
+    if (!description) return;
+
+    setIsLoading(true);
+    try {
+      const { data: { secret: OPENAI_API_KEY } } = await supabase
+        .from('secrets')
+        .select('secret')
+        .eq('name', 'OPENAI_API_KEY')
+        .single();
+
+      if (!OPENAI_API_KEY) {
+        toast({
+          title: "Error",
+          description: "OpenAI API key not found. Please add it in the project settings.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const openai = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true
+      });
+
+      const completion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: `You are a goal-setting expert. Based on the user's profile description, suggest 3 SMART goals. 
+            Format your response as JSON array with objects containing: title, description, target_date (YYYY-MM-DD, 3-6 months from now), and tags (array of relevant keywords).
+            Make the goals specific, measurable, achievable, relevant, and time-bound.`
+          },
+          {
+            role: 'user',
+            content: `Based on this profile description, suggest 3 personalized goals: ${description}`
+          }
+        ],
+        model: 'gpt-4o',
+      });
+
+      const suggestedGoalsText = completion.choices[0]?.message?.content || '[]';
+      const suggestedGoals = JSON.parse(suggestedGoalsText);
+
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: "Based on your profile, here are some suggested goals that might interest you:",
+        suggestedGoals
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate goal suggestions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSuggestedGoal = async (goal: {
+    title: string;
+    description: string;
+    target_date: string;
+    tags: string[];
+  }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { error } = await supabase
+        .from('goals')
+        .insert([{
+          ...goal,
+          progress: 0,
+          user_id: session.user.id,
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Goal added successfully!",
+      });
+
+      // Refresh goals list
+      fetchUserGoals();
+
+    } catch (error) {
+      console.error('Error adding goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add goal",
+        variant: "destructive",
+      });
+    }
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -110,7 +237,7 @@ Always maintain a supportive, encouraging tone while being direct and practical 
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: input }
         ],
-        model: 'gpt-4',
+        model: 'gpt-4o',
       });
 
       const assistantMessage = {
@@ -167,7 +294,41 @@ Always maintain a supportive, encouraging tone while being direct and practical 
       <ScrollArea className="flex-1 pr-4 mb-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
-            <ChatMessage key={index} {...message} />
+            <div key={index}>
+              <ChatMessage {...message} />
+              {message.suggestedGoals && (
+                <div className="ml-8 mt-2 space-y-2">
+                  {message.suggestedGoals.map((goal, goalIndex) => (
+                    <div key={goalIndex} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{goal.title}</h4>
+                          <p className="text-sm text-gray-600">{goal.description}</p>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Target: {new Date(goal.target_date).toLocaleDateString()}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {goal.tags.map((tag, tagIndex) => (
+                              <span key={tagIndex} className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="ml-2"
+                          onClick={() => handleAddSuggestedGoal(goal)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
           {isLoading && (
             <div className="flex justify-start">
