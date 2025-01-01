@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, User, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 interface ProfileAvatarProps {
@@ -25,17 +25,15 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     });
 
     try {
-      // First check if the bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const profileImagesBucket = buckets?.find(b => b.name === 'profile_images');
+      // Check if we can access the bucket
+      const { data: bucketExists, error: bucketError } = await supabase
+        .storage
+        .from('profile_images')
+        .list();
 
-      if (!profileImagesBucket) {
-        toast({
-          title: "Configuration Error",
-          description: "The profile images storage is not properly configured. Please contact support.",
-          variant: "destructive",
-        });
-        return;
+      if (bucketError) {
+        console.error("Bucket error:", bucketError);
+        throw new Error("Storage is not properly configured. Please ensure the 'profile_images' bucket exists and is accessible.");
       }
 
       const fileExt = file.name.split(".").pop();
@@ -72,7 +70,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: "Failed to upload image. Please try again later.",
+        description: error instanceof Error ? error.message : "Failed to upload image. Please try again later.",
         variant: "destructive",
       });
     } finally {
