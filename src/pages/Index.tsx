@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
-import { GoalCard } from "@/components/GoalCard";
 import { Profile } from "@/components/Profile";
 import { useToast } from "@/components/ui/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { EditGoalDialog } from "@/components/EditGoalDialog";
+import { GoalsList } from "@/components/GoalsList";
 
 interface Goal {
   id: number;
@@ -15,17 +14,16 @@ interface Goal {
   description: string;
   progress: number;
   target_date: string;
+  tags: string[];
   user_id: string;
 }
 
 const Index = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [user, setUser] = useState(null);
-  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -33,7 +31,6 @@ const Index = () => {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -70,6 +67,7 @@ const Index = () => {
       title: newGoal.title,
       description: newGoal.description,
       target_date: newGoal.target_date,
+      tags: newGoal.tags,
       progress: 0,
       user_id: user.id,
     };
@@ -91,56 +89,6 @@ const Index = () => {
       toast({
         title: "Success",
         description: "Goal added successfully!",
-      });
-    }
-  };
-
-  const handleDeleteGoal = async (id: number) => {
-    const { error } = await supabase
-      .from('goals')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete goal",
-        variant: "destructive",
-      });
-    } else {
-      setGoals(goals.filter((goal) => goal.id !== id));
-      toast({
-        title: "Success",
-        description: "Goal deleted successfully",
-      });
-    }
-  };
-
-  const handleEditGoal = async (id: number, updatedGoal: Omit<Goal, "id" | "progress" | "user_id">) => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('goals')
-      .update({
-        title: updatedGoal.title,
-        description: updatedGoal.description,
-        target_date: updatedGoal.target_date
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update goal",
-        variant: "destructive",
-      });
-    } else {
-      setGoals(goals.map(goal => goal.id === id ? { ...goal, ...data } : goal));
-      toast({
-        title: "Success",
-        description: "Goal updated successfully!",
       });
     }
   };
@@ -184,30 +132,7 @@ const Index = () => {
           <AddGoalDialog onAddGoal={handleAddGoal} />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {goals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              onDelete={handleDeleteGoal}
-              onEdit={() => setEditingGoal(goal)}
-            />
-          ))}
-          {goals.length === 0 && (
-            <div className="col-span-2 text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
-              <p className="text-gray-500">No goals yet. Add your first goal to get started!</p>
-            </div>
-          )}
-        </div>
-
-        {editingGoal && (
-          <EditGoalDialog
-            goal={editingGoal}
-            open={!!editingGoal}
-            onOpenChange={(open) => !open && setEditingGoal(null)}
-            onEditGoal={handleEditGoal}
-          />
-        )}
+        <GoalsList goals={goals} setGoals={setGoals} />
       </div>
     </div>
   );

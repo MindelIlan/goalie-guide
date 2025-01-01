@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 
@@ -12,6 +13,7 @@ interface GoalCardProps {
     description: string;
     progress: number;
     target_date: string;
+    tags: string[];
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
@@ -31,6 +33,13 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
         <div>
           <h3 className="text-xl font-semibold text-gray-800">{goal.title}</h3>
           <p className="text-gray-600 mt-1">{goal.description}</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {goal.tags?.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
         </div>
         <div className={`flex gap-2 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <Button variant="ghost" size="icon" onClick={() => onEdit(goal.id)}>

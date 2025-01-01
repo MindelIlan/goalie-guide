@@ -5,27 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { TagInput } from "./TagInput";
 
 interface AddGoalDialogProps {
   onAddGoal: (goal: {
     title: string;
     description: string;
-    target_date: string;  // Changed from targetDate to target_date
+    target_date: string;
+    tags: string[];
   }) => void;
 }
 
 export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [target_date, setTargetDate] = useState("");  // Changed variable name to match
+  const [target_date, setTargetDate] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddGoal({ title, description, target_date });  // Changed from targetDate to target_date
+    onAddGoal({ title, description, target_date, tags });
     setTitle("");
     setDescription("");
     setTargetDate("");
+    setTags([]);
     setOpen(false);
   };
 
@@ -71,6 +75,10 @@ export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
               onChange={(e) => setTargetDate(e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagInput tags={tags} setTags={setTags} />
           </div>
           <Button type="submit" className="w-full">Add Goal</Button>
         </form>

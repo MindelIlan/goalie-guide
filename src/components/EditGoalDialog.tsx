@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "./TagInput";
 
 interface EditGoalDialogProps {
   goal: {
@@ -11,6 +12,7 @@ interface EditGoalDialogProps {
     title: string;
     description: string;
     target_date: string;
+    tags: string[];
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +20,7 @@ interface EditGoalDialogProps {
     title: string;
     description: string;
     target_date: string;
+    tags: string[];
   }) => void;
 }
 
@@ -25,16 +28,18 @@ export const EditGoalDialog = ({ goal, open, onOpenChange, onEditGoal }: EditGoa
   const [title, setTitle] = useState(goal.title);
   const [description, setDescription] = useState(goal.description);
   const [target_date, setTargetDate] = useState(goal.target_date);
+  const [tags, setTags] = useState(goal.tags || []);
 
   useEffect(() => {
     setTitle(goal.title);
     setDescription(goal.description);
     setTargetDate(goal.target_date);
+    setTags(goal.tags || []);
   }, [goal]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onEditGoal(goal.id, { title, description, target_date });
+    onEditGoal(goal.id, { title, description, target_date, tags });
     onOpenChange(false);
   };
 
@@ -74,6 +79,10 @@ export const EditGoalDialog = ({ goal, open, onOpenChange, onEditGoal }: EditGoa
               onChange={(e) => setTargetDate(e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagInput tags={tags} setTags={setTags} />
           </div>
           <Button type="submit" className="w-full">Save Changes</Button>
         </form>
