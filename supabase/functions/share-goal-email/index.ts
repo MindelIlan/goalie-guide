@@ -18,7 +18,7 @@ interface EmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Received request to share-goal-email function");
+  console.log("Starting share-goal-email function execution");
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -26,8 +26,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Check for RESEND_API_KEY early
     if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+      console.error("RESEND_API_KEY is not set in environment variables");
+      throw new Error("RESEND_API_KEY is not configured. Please set up the API key in Supabase Edge Function secrets.");
     }
 
     // Parse request body
@@ -38,16 +40,18 @@ const handler = async (req: Request): Promise<Response> => {
       goalId,
       goalTitle,
       recipientEmail,
-      senderEmail,
+      senderEmail: senderEmail.replace(/@.*$/, '@...') // Log email domain safely
     });
 
     // Initialize Supabase client
-    const supabase = createClient(
-      SUPABASE_URL!,
-      SUPABASE_ANON_KEY!
-    );
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error("Missing Supabase configuration");
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Send email using Resend
+    console.log("Sending email via Resend API...");
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -70,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       const error = await res.text();
-      console.error("Error from Resend API:", error);
+      console.error("Error response from Resend API:", error);
       throw new Error(`Failed to send email: ${error}`);
     }
 
@@ -85,7 +89,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in share-goal-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ 
+        error: error.message || "Internal server error",
+        details: error.stack
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
