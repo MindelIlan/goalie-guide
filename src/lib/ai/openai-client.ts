@@ -13,8 +13,8 @@ export const getOpenAIClient = async () => {
     throw new Error("Failed to fetch OpenAI API key. Please try again later.");
   }
 
-  if (!data) {
-    throw new Error("OpenAI API key not found. Please add it to your Supabase secrets.");
+  if (!data?.secret) {
+    throw new Error("OpenAI API key not found or invalid. Please check your Supabase secrets.");
   }
 
   return new OpenAI({
