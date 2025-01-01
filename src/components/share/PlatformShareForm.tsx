@@ -32,7 +32,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .maybeSingle();
+        .single();
 
       if (profileError) throw new Error('Failed to find user');
       if (!profileData) throw new Error('User not found. Please check the email address.');
@@ -43,9 +43,9 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .select('id')
         .eq('goal_id', goalId)
         .eq('shared_with', profileData.id)
-        .maybeSingle();
+        .single();
 
-      if (existingError) throw new Error('Failed to check existing shares');
+      if (existingError && existingError.code !== 'PGRST116') throw new Error('Failed to check existing shares');
       if (existingShare) throw new Error('Goal already shared with this user');
 
       // Share the goal

@@ -85,6 +85,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           description: string | null
+          email: string | null
           id: string
           openai_api_key: string | null
         }
@@ -92,6 +93,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
           id: string
           openai_api_key?: string | null
         }
@@ -99,6 +101,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
           id?: string
           openai_api_key?: string | null
         }
