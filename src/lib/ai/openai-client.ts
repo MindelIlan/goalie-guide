@@ -6,10 +6,15 @@ export const getOpenAIClient = async () => {
     .from('secrets')
     .select('secret')
     .eq('name', 'OPENAI_API_KEY')
-    .single();
+    .maybeSingle();
 
-  if (error || !data?.secret) {
-    throw new Error("OpenAI API key not found");
+  if (error) {
+    console.error('Error fetching OpenAI API key:', error);
+    throw new Error("Failed to fetch OpenAI API key");
+  }
+
+  if (!data?.secret) {
+    throw new Error("OpenAI API key not found. Please make sure you've added it to your secrets.");
   }
 
   return new OpenAI({
