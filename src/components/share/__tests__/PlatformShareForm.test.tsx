@@ -16,7 +16,32 @@ vi.mock('@/lib/supabase', () => ({
           maybeSingle: vi.fn(),
         })),
       })),
-      insert: vi.fn(() => Promise.resolve({ error: null })),
+      insert: vi.fn(() => ({
+        select: vi.fn(),
+        eq: vi.fn(),
+        neq: vi.fn(),
+        gt: vi.fn(),
+        gte: vi.fn(),
+        lt: vi.fn(),
+        lte: vi.fn(),
+        like: vi.fn(),
+        ilike: vi.fn(),
+        is: vi.fn(),
+        in: vi.fn(),
+        contains: vi.fn(),
+        containedBy: vi.fn(),
+        rangeLt: vi.fn(),
+        rangeGt: vi.fn(),
+        rangeGte: vi.fn(),
+        rangeLte: vi.fn(),
+        rangeAdjacent: vi.fn(),
+        overlaps: vi.fn(),
+        match: vi.fn(),
+        not: vi.fn(),
+        filter: vi.fn(),
+        or: vi.fn(),
+        and: vi.fn(),
+      })),
     })),
   },
 }));
@@ -28,25 +53,13 @@ describe('PlatformShareForm', () => {
     onSuccess: vi.fn(),
   };
 
-  const mockUser: User = {
+  const mockUser: Partial<User> = {
     id: 'test-user-id',
     email: 'current@example.com',
     app_metadata: {},
     user_metadata: {},
     aud: 'authenticated',
     created_at: '2024-01-01T00:00:00.000Z',
-    role: '',
-    aal: '',
-    amr: [{ method: '', timestamp: 0 }],
-    last_sign_in_at: '',
-    session_id: '',
-    phone: '',
-    confirmed_at: '',
-    email_confirmed_at: '',
-    phone_confirmed_at: '',
-    last_password_change: '',
-    factors: [],
-    updated_at: '',
   };
 
   beforeEach(() => {
@@ -62,7 +75,7 @@ describe('PlatformShareForm', () => {
 
   it('shows error when sharing with own email', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: mockUser },
+      data: { user: mockUser as User },
       error: null,
     });
 
@@ -81,7 +94,7 @@ describe('PlatformShareForm', () => {
 
   it('shows error when user not found', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: mockUser },
+      data: { user: mockUser as User },
       error: null,
     });
 
@@ -92,7 +105,7 @@ describe('PlatformShareForm', () => {
         }),
       }),
       insert: vi.fn(),
-    }));
+    } as any));
 
     render(<PlatformShareForm {...mockProps} />);
     
@@ -109,7 +122,7 @@ describe('PlatformShareForm', () => {
 
   it('calls onSuccess when share is successful', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: mockUser },
+      data: { user: mockUser as User },
       error: null,
     });
 
@@ -123,7 +136,7 @@ describe('PlatformShareForm', () => {
         }),
       }),
       insert: () => Promise.resolve({ error: null }),
-    }));
+    } as any));
 
     render(<PlatformShareForm {...mockProps} />);
     
