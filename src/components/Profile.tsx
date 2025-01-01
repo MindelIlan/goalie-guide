@@ -64,7 +64,7 @@ export const Profile = ({ userId }: { userId: string }) => {
         <ProfileAvatar
           userId={userId}
           avatarUrl={profile.avatar_url}
-          onAvatarUpdate={handleAvatarUpdate}
+          onAvatarChange={handleAvatarUpdate}
         />
         <ProfileDescription
           userId={userId}
