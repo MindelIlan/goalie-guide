@@ -14,9 +14,10 @@ interface AddGoalDialogProps {
     target_date: string;
     tags: string[];
   }) => void;
+  children?: React.ReactNode; // Add children prop
 }
 
-export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
+export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [target_date, setTargetDate] = useState("");
@@ -36,10 +37,12 @@ export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add New Goal
-        </Button>
+        {children || (
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Goal
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
