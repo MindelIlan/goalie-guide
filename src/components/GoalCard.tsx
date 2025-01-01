@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Share2, Eye, EyeOff, List, ListOff, CheckSquare, Clock, Calendar } from "lucide-react";
+import { Pencil, Trash2, Share2, Eye, EyeOff, List, X, CheckSquare, Clock, Calendar } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
 import { SubgoalsList } from "./SubgoalsList";
@@ -180,7 +180,7 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
               onClick={() => setShowSimilar(!showSimilar)}
               className="text-sm text-primary hover:text-primary/80 hover:bg-primary/10 flex items-center gap-2"
             >
-              {showSimilar ? <ListOff className="h-4 w-4" /> : <List className="h-4 w-4" />}
+              {showSimilar ? <X className="h-4 w-4" /> : <List className="h-4 w-4" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
