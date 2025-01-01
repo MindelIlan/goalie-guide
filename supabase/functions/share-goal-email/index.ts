@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,10 +23,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Check for RESEND_API_KEY early
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY is not set in environment variables");
-      throw new Error("RESEND_API_KEY is not configured. Please set up the API key in Supabase Edge Function secrets.");
+      throw new Error("RESEND_API_KEY is not configured");
     }
 
     console.log("RESEND_API_KEY is configured correctly");
@@ -45,13 +41,6 @@ const handler = async (req: Request): Promise<Response> => {
       senderEmail: senderEmail.replace(/@.*$/, '@...') // Log email domain safely
     });
 
-    // Initialize Supabase client
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error("Missing Supabase configuration");
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // Send email using Resend
     console.log("Sending email via Resend API...");
     const res = await fetch("https://api.resend.com/emails", {
@@ -61,29 +50,27 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Goal Tracker <goals@yourdomain.com>",
+        from: "Goal Tracker <onboarding@resend.dev>",
         to: [recipientEmail],
         subject: `${senderEmail} shared a goal with you: ${goalTitle}`,
         html: `
           <h2>You've been invited to view a goal!</h2>
           <p>${senderEmail} has shared their goal "${goalTitle}" with you.</p>
           <p>To view this goal, please sign up or log in to Goal Tracker:</p>
-          <p><a href="${SUPABASE_URL}/auth/v1/authorize?provider=google">Join Goal Tracker</a></p>
+          <p><a href="${Deno.env.get('SUPABASE_URL')}/auth/v1/authorize?provider=google">Join Goal Tracker</a></p>
           <p>Once you're signed up, you'll be able to see this goal in your dashboard.</p>
         `,
       }),
     });
 
+    const resData = await res.json();
+    console.log('Resend API response:', resData);
+
     if (!res.ok) {
-      const error = await res.text();
-      console.error("Error response from Resend API:", error);
-      throw new Error(`Failed to send email: ${error}`);
+      throw new Error(`Resend API error: ${JSON.stringify(resData)}`);
     }
 
-    const data = await res.json();
-    console.log('Email sent successfully:', data);
-
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(resData), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
