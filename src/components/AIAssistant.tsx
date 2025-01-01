@@ -5,20 +5,16 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, Bot, X, Plus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
 import { AIDisclaimer } from "./ai/AIDisclaimer";
 import { ChatMessage } from "./ai/ChatMessage";
+import { generateGoalSuggestions, type SuggestedGoal } from "@/lib/ai/goal-suggestions";
+import { getOpenAIClient } from "@/lib/ai/openai-client";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  suggestedGoals?: {
-    title: string;
-    description: string;
-    target_date: string;
-    tags: string[];
-  }[];
+  suggestedGoals?: SuggestedGoal[];
 }
 
 interface Goal {
@@ -55,7 +51,6 @@ export const AIAssistant = () => {
 
     if (profile?.description) {
       setUserDescription(profile.description);
-      // Automatically suggest goals when profile is loaded
       suggestGoalsBasedOnProfile(profile.description);
     }
   };
@@ -78,45 +73,8 @@ export const AIAssistant = () => {
 
     setIsLoading(true);
     try {
-      const { data: { secret: OPENAI_API_KEY } } = await supabase
-        .from('secrets')
-        .select('secret')
-        .eq('name', 'OPENAI_API_KEY')
-        .single();
-
-      if (!OPENAI_API_KEY) {
-        toast({
-          title: "Error",
-          description: "OpenAI API key not found. Please add it in the project settings.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true
-      });
-
-      const completion = await openai.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: `You are a goal-setting expert. Based on the user's profile description, suggest 3 SMART goals. 
-            Format your response as JSON array with objects containing: title, description, target_date (YYYY-MM-DD, 3-6 months from now), and tags (array of relevant keywords).
-            Make the goals specific, measurable, achievable, relevant, and time-bound.`
-          },
-          {
-            role: 'user',
-            content: `Based on this profile description, suggest 3 personalized goals: ${description}`
-          }
-        ],
-        model: 'gpt-4o',
-      });
-
-      const suggestedGoalsText = completion.choices[0]?.message?.content || '[]';
-      const suggestedGoals = JSON.parse(suggestedGoalsText);
-
+      const suggestedGoals = await generateGoalSuggestions(description);
+      
       const assistantMessage = {
         role: 'assistant' as const,
         content: "Based on your profile, here are some suggested goals that might interest you:",
@@ -124,7 +82,6 @@ export const AIAssistant = () => {
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -137,12 +94,7 @@ export const AIAssistant = () => {
     }
   };
 
-  const handleAddSuggestedGoal = async (goal: {
-    title: string;
-    description: string;
-    target_date: string;
-    tags: string[];
-  }) => {
+  const handleAddSuggestedGoal = async (goal: SuggestedGoal) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
@@ -162,7 +114,6 @@ export const AIAssistant = () => {
         description: "Goal added successfully!",
       });
 
-      // Refresh goals list
       fetchUserGoals();
 
     } catch (error) {
@@ -186,25 +137,7 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const { data: { secret: OPENAI_API_KEY } } = await supabase
-        .from('secrets')
-        .select('secret')
-        .eq('name', 'OPENAI_API_KEY')
-        .single();
-
-      if (!OPENAI_API_KEY) {
-        toast({
-          title: "Error",
-          description: "OpenAI API key not found. Please add it in the project settings.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true
-      });
+      const openai = await getOpenAIClient();
 
       const goalsContext = userGoals.length > 0 
         ? `Here are the user's current goals:\n\n${userGoals.map((goal, index) => 
@@ -220,16 +153,15 @@ export const AIAssistant = () => {
 ${goalsContext}
 
 Your role is to:
-
-1. Help users create SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound)
+1. Help users create SMART goals
 2. Break down complex goals into manageable steps
-3. Provide actionable strategies and techniques for goal achievement
-4. Offer motivation and accountability support
-5. Help identify potential obstacles and develop contingency plans
-6. Guide users in tracking and measuring their progress
-7. Share relevant best practices and success stories
+3. Provide actionable strategies
+4. Offer motivation and support
+5. Help identify potential obstacles
+6. Guide users in tracking progress
+7. Share relevant best practices
 
-Always maintain a supportive, encouraging tone while being direct and practical in your advice. Ask clarifying questions when needed to better understand the user's situation and provide more targeted guidance. Reference the user's existing goals when relevant to provide personalized advice.`;
+Always maintain a supportive, encouraging tone while being direct and practical in your advice.`;
 
       const completion = await openai.chat.completions.create({
         messages: [
@@ -237,7 +169,7 @@ Always maintain a supportive, encouraging tone while being direct and practical 
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: input }
         ],
-        model: 'gpt-4o',
+        model: 'gpt-4',
       });
 
       const assistantMessage = {

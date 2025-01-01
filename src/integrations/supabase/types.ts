@@ -63,6 +63,27 @@ export type Database = {
         }
         Relationships: []
       }
+      secrets: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          secret?: string
+        }
+        Relationships: []
+      }
       subgoals: {
         Row: {
           completed: boolean | null
