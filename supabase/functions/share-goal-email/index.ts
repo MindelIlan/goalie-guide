@@ -32,6 +32,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("RESEND_API_KEY is not configured. Please set up the API key in Supabase Edge Function secrets.");
     }
 
+    console.log("RESEND_API_KEY is configured correctly");
+
     // Parse request body
     const emailRequest: EmailRequest = await req.json();
     const { goalId, goalTitle, recipientEmail, senderEmail } = emailRequest;
