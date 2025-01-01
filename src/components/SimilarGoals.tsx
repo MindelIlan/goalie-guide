@@ -35,13 +35,13 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           title,
           description,
           progress,
-          profiles!goals_user_id_fkey (
+          profiles:user_id (
             id,
             avatar_url,
             description
           )
         `)
-        .neq('title', goalTitle) // Exclude the current goal
+        .neq('title', goalTitle)
         .ilike('title', `%${goalTitle}%`)
         .limit(5);
 
@@ -60,7 +60,8 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
             avatar_url: null,
             description: null
           }
-        }));
+        })) as SimilarGoal[];
+        
         setSimilarGoals(formattedGoals);
       }
     } catch (error) {
