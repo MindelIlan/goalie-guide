@@ -1,7 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, User } from "lucide-react";
+import { Camera, User, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface ProfileAvatarProps {
   userId: string;
@@ -11,10 +12,17 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvatarProps) => {
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    setIsUploading(true);
+    toast({
+      title: "Uploading...",
+      description: "Your profile image is being uploaded",
+    });
 
     try {
       // First check if the bucket exists
@@ -67,6 +75,8 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         description: "Failed to upload image. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -80,15 +90,20 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       </Avatar>
       <label
         htmlFor="avatar-upload"
-        className="absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+        className={`absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer hover:bg-primary/90 transition-colors ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
       >
-        <Camera className="w-4 h-4 text-white" />
+        {isUploading ? (
+          <Loader2 className="w-4 h-4 text-white animate-spin" />
+        ) : (
+          <Camera className="w-4 h-4 text-white" />
+        )}
         <input
           id="avatar-upload"
           type="file"
           accept="image/*"
           className="hidden"
           onChange={handleImageUpload}
+          disabled={isUploading}
         />
       </label>
     </div>
