@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { GoalsList } from "@/components/GoalsList";
+import { AIAssistant } from "@/components/AIAssistant";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Goal {
   id: number;
@@ -128,11 +130,21 @@ const Index = () => {
 
         <Profile userId={user.id} />
 
-        <div className="mb-8 text-center">
-          <AddGoalDialog onAddGoal={handleAddGoal} />
-        </div>
-
-        <GoalsList goals={goals} setGoals={setGoals} />
+        <Tabs defaultValue="goals" className="mb-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="goals">Goals</TabsTrigger>
+            <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+          </TabsList>
+          <TabsContent value="goals">
+            <div className="mb-8 text-center">
+              <AddGoalDialog onAddGoal={handleAddGoal} />
+            </div>
+            <GoalsList goals={goals} setGoals={setGoals} />
+          </TabsContent>
+          <TabsContent value="assistant">
+            <AIAssistant />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
