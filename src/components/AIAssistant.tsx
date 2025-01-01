@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -13,10 +13,36 @@ interface Message {
   content: string;
 }
 
+interface Goal {
+  title: string;
+  description: string;
+  progress: number;
+  target_date: string;
+  tags: string[];
+}
+
 export const AIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userGoals, setUserGoals] = useState<Goal[]>([]);
+
+  useEffect(() => {
+    fetchUserGoals();
+  }, []);
+
+  const fetchUserGoals = async () => {
+    const { data: goals, error } = await supabase
+      .from('goals')
+      .select('title, description, progress, target_date, tags');
+
+    if (error) {
+      console.error('Error fetching goals:', error);
+      return;
+    }
+
+    setUserGoals(goals || []);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +74,20 @@ export const AIAssistant = () => {
         dangerouslyAllowBrowser: true
       });
 
-      const systemMessage = `You are an experienced goal-setting expert and personal development coach with years of experience helping individuals achieve their objectives. Your role is to:
+      const goalsContext = userGoals.length > 0 
+        ? `Here are the user's current goals:\n\n${userGoals.map((goal, index) => 
+            `${index + 1}. ${goal.title} (Progress: ${goal.progress}%)\n` +
+            `   Description: ${goal.description}\n` +
+            `   Target Date: ${new Date(goal.target_date).toLocaleDateString()}\n` +
+            `   Tags: ${goal.tags.join(', ')}`
+          ).join('\n\n')}`
+        : "The user hasn't set any goals yet.";
+
+      const systemMessage = `You are an experienced goal-setting expert and personal development coach with years of experience helping individuals achieve their objectives. 
+
+${goalsContext}
+
+Your role is to:
 
 1. Help users create SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound)
 2. Break down complex goals into manageable steps
@@ -58,7 +97,7 @@ export const AIAssistant = () => {
 6. Guide users in tracking and measuring their progress
 7. Share relevant best practices and success stories
 
-Always maintain a supportive, encouraging tone while being direct and practical in your advice. Ask clarifying questions when needed to better understand the user's situation and provide more targeted guidance.`;
+Always maintain a supportive, encouraging tone while being direct and practical in your advice. Ask clarifying questions when needed to better understand the user's situation and provide more targeted guidance. Reference the user's existing goals when relevant to provide personalized advice.`;
 
       const completion = await openai.chat.completions.create({
         messages: [
