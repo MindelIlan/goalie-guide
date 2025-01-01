@@ -17,6 +17,19 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     if (!file) return;
 
     try {
+      // First check if the bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const profileImagesBucket = buckets?.find(b => b.name === 'profile_images');
+
+      if (!profileImagesBucket) {
+        toast({
+          title: "Configuration Error",
+          description: "The profile images storage is not properly configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const fileExt = file.name.split(".").pop();
       const filePath = `${userId}-${Math.random()}.${fileExt}`;
 
@@ -24,7 +37,10 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         .from("profile_images")
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
@@ -34,7 +50,10 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         .from("profiles")
         .upsert({ id: userId, avatar_url: publicUrl });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
 
       onAvatarUpdate(publicUrl);
       toast({
@@ -45,7 +64,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: "Failed to upload image. Please try again later.",
         variant: "destructive",
       });
     }
