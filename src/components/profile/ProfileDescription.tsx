@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { testOpenAIConnection } from "@/lib/ai/chat-service";
 
 interface ProfileDescriptionProps {
   userId: string;
@@ -25,6 +26,7 @@ export const ProfileDescription = ({
   const [apiKey, setApiKey] = useState(openai_api_key || "");
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
   const { toast } = useToast();
 
   const validateApiKey = (key: string): boolean => {
@@ -45,6 +47,47 @@ export const ProfileDescription = ({
     const newKey = e.target.value;
     setApiKey(newKey);
     validateApiKey(newKey);
+  };
+
+  const handleTestApiKey = async () => {
+    if (!validateApiKey(apiKey)) {
+      toast({
+        title: "Invalid API Key",
+        description: apiKeyError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      // First save the API key
+      const { error: saveError } = await supabase
+        .from("profiles")
+        .upsert({ 
+          id: userId, 
+          openai_api_key: apiKey 
+        });
+
+      if (saveError) throw saveError;
+
+      // Then test the connection
+      await testOpenAIConnection();
+      
+      toast({
+        title: "Success",
+        description: "OpenAI API key is valid and working!",
+      });
+    } catch (error) {
+      console.error("Error testing API key:", error);
+      toast({
+        title: "Error",
+        description: "Failed to verify OpenAI API key. Please check the key and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleSaveDescription = async () => {
@@ -131,6 +174,20 @@ export const ProfileDescription = ({
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => setIsEditing(false)}>
           Cancel
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={handleTestApiKey}
+          disabled={isTesting || !apiKey}
+        >
+          {isTesting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Testing...
+            </>
+          ) : (
+            'Test Key'
+          )}
         </Button>
         <Button onClick={handleSaveDescription}>
           Save
