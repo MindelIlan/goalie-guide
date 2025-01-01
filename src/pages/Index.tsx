@@ -99,30 +99,37 @@ const Index = () => {
 
   const handleSignOut = async () => {
     try {
-      // First clear any local session data
+      // First clear local state
       setUser(null);
       setGoals([]);
       
-      // Then attempt to sign out from Supabase
+      // Clear all session data from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('supabase.auth.')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Sign out error:", error);
-        throw error;
+        // Even with an error, we've cleared local state
+        toast({
+          title: "Signed out",
+          description: "You have been signed out locally",
+        });
+        return;
       }
 
-      // Clear any remaining session data from localStorage
-      localStorage.removeItem('supabase.auth.token');
-      
       toast({
         title: "Signed out",
         description: "You have been signed out successfully",
       });
     } catch (error) {
       console.error("Sign out error:", error);
-      // Even if there's an error, we want to clear the local state
-      setUser(null);
-      setGoals([]);
+      // Ensure user is signed out locally even if there's an error
       toast({
         title: "Signed out",
         description: "You have been signed out locally",

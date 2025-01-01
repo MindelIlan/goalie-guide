@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { FcGoogle } from 'react-icons/fc';
 
 export const Auth = () => {
@@ -34,9 +34,20 @@ export const Auth = () => {
         description: "Check your email for the confirmation link!",
       });
     } catch (error) {
+      let message = "An error occurred during sign up";
+      if (error instanceof Error) {
+        // Handle specific error messages
+        if (error.message.includes("invalid_credentials")) {
+          message = "Invalid email or password format";
+        } else if (error.message.includes("email")) {
+          message = "Please enter a valid email address";
+        } else {
+          message = error.message;
+        }
+      }
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during sign up",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -57,11 +68,20 @@ export const Auth = () => {
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("invalid_credentials")) {
+          throw new Error("Invalid email or password");
+        }
+        throw error;
+      }
     } catch (error) {
+      let message = "An error occurred during sign in";
+      if (error instanceof Error) {
+        message = error.message;
+      }
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during sign in",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -75,7 +95,11 @@ export const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
       
@@ -94,13 +118,14 @@ export const Auth = () => {
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center">Welcome to Goal Tracker</h2>
-      <form className="space-y-4">
+      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         <div>
           <Input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -109,6 +134,8 @@ export const Auth = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
           />
         </div>
         <div className="flex gap-4">
@@ -116,6 +143,7 @@ export const Auth = () => {
             onClick={handleSignIn}
             disabled={loading}
             className="flex-1"
+            type="submit"
           >
             Sign In
           </Button>
@@ -124,6 +152,7 @@ export const Auth = () => {
             disabled={loading}
             variant="outline"
             className="flex-1"
+            type="button"
           >
             Sign Up
           </Button>
@@ -143,6 +172,7 @@ export const Auth = () => {
           onClick={handleGoogleSignIn}
           disabled={loading}
           className="w-full"
+          type="button"
         >
           <FcGoogle className="mr-2 h-4 w-4" />
           Google
