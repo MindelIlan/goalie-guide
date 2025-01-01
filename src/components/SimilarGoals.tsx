@@ -35,12 +35,13 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           title,
           description,
           progress,
-          profiles (
+          profiles!goals_user_id_fkey (
             id,
             avatar_url,
             description
           )
         `)
+        .neq('title', goalTitle) // Exclude the current goal
         .ilike('title', `%${goalTitle}%`)
         .limit(5);
 
@@ -51,7 +52,16 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
 
       console.log("Fetched goals:", goals);
       if (goals) {
-        setSimilarGoals(goals);
+        // Transform the data to match our expected type
+        const formattedGoals = goals.map(goal => ({
+          ...goal,
+          profiles: goal.profiles || {
+            id: '',
+            avatar_url: null,
+            description: null
+          }
+        }));
+        setSimilarGoals(formattedGoals);
       }
     } catch (error) {
       console.error("Error in fetchSimilarGoals:", error);
