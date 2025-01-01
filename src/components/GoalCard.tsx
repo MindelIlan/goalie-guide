@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, Trash2, Share2, ChevronDown, ChevronUp, CheckSquare, Clock } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
 import { SubgoalsList } from "./SubgoalsList";
@@ -39,6 +39,27 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
     }
   };
 
+  const calculateTimeProgress = () => {
+    const startDate = new Date(goal.created_at || new Date());
+    const targetDate = new Date(goal.target_date);
+    const currentDate = new Date();
+
+    // If target date is in the past, return 100%
+    if (currentDate > targetDate) return 100;
+    
+    // If target date is today or invalid, return current progress
+    if (isNaN(targetDate.getTime()) || targetDate <= startDate) return goal.progress;
+
+    const totalDuration = targetDate.getTime() - startDate.getTime();
+    const elapsedDuration = currentDate.getTime() - startDate.getTime();
+    const timeProgress = Math.round((elapsedDuration / totalDuration) * 100);
+
+    // Ensure progress is between 0 and 100
+    return Math.min(Math.max(timeProgress, 0), 100);
+  };
+
+  const timeProgress = calculateTimeProgress();
+
   return (
     <Card 
       className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative"
@@ -70,12 +91,32 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
         </div>
       </div>
       
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Progress</span>
-          <span>{goal.progress}%</span>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-600 items-center">
+            <span className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              Task Progress
+            </span>
+            <span>{goal.progress}%</span>
+          </div>
+          <Progress value={goal.progress} className="h-2" />
         </div>
-        <Progress value={goal.progress} className="h-2" />
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-600 items-center">
+            <span className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Time Progress
+            </span>
+            <span>{timeProgress}%</span>
+          </div>
+          <Progress 
+            value={timeProgress} 
+            className="h-2" 
+            indicatorClassName="bg-secondary"
+          />
+        </div>
       </div>
       
       <div className="mt-4 text-sm text-gray-500">
