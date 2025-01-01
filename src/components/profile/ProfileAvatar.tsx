@@ -25,12 +25,22 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     });
 
     try {
+      // Get the current session to ensure we're authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("You must be authenticated to upload images");
+      }
+
       const fileExt = file.name.split(".").pop();
-      const filePath = `${userId}-${Math.random()}.${fileExt}`;
+      // Use the authenticated user's ID in the file path
+      const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          upsert: true // Enable upsert to replace existing files
+        });
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
