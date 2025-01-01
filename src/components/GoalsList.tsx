@@ -54,7 +54,7 @@ export const GoalsList = ({ goals, setGoals }: GoalsListProps) => {
         title: updatedGoal.title,
         description: updatedGoal.description,
         target_date: updatedGoal.target_date,
-        tags: updatedGoal.tags,
+        tags: updatedGoal.tags || [],
       })
       .eq("id", id)
       .select()
