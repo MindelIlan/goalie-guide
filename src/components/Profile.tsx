@@ -65,6 +65,26 @@ export const Profile = ({ userId }: { userId: string }) => {
     if (!file) return;
 
     try {
+      // First, ensure the bucket exists
+      const { data: buckets } = await supabase
+        .storage
+        .listBuckets();
+
+      const bucketExists = buckets?.some(bucket => bucket.name === 'profile_images');
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('profile_images', {
+            public: true,
+            fileSizeLimit: 1024 * 1024 * 2 // 2MB
+          });
+
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+
       const fileExt = file.name.split(".").pop();
       const filePath = `${userId}-${Math.random()}.${fileExt}`;
 
