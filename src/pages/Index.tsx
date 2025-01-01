@@ -18,6 +18,7 @@ interface Goal {
   target_date: string;
   tags: string[];
   user_id: string;
+  created_at: string;
 }
 
 const Index = () => {
@@ -62,7 +63,7 @@ const Index = () => {
     }
   };
 
-  const handleAddGoal = async (newGoal: Omit<Goal, "id" | "progress" | "user_id">) => {
+  const handleAddGoal = async (newGoal: Omit<Goal, "id" | "progress" | "user_id" | "created_at">) => {
     if (!user) return;
 
     const goal = {
