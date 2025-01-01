@@ -70,6 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const data = await res.json();
+    console.log('Email sent successfully:', data);
 
     return new Response(JSON.stringify(data), {
       status: 200,
