@@ -11,6 +11,8 @@ export const testOpenAIConnection = async () => {
         { role: 'user', content: 'Say "OpenAI connection successful!" if you can read this message.' }
       ],
       model: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 100,
     });
 
     const response = completion.choices[0]?.message?.content;
