@@ -3,9 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Share2 } from "lucide-react";
+import { Pencil, Trash2, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
+import { SubgoalsList } from "./SubgoalsList";
+import { supabase } from "@/lib/supabase";
 
 interface GoalCardProps {
   goal: {
@@ -24,6 +26,18 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showSimilar, setShowSimilar] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showSubgoals, setShowSubgoals] = useState(false);
+
+  const updateGoalProgress = async (progress: number) => {
+    const { error } = await supabase
+      .from('goals')
+      .update({ progress })
+      .eq('id', goal.id);
+
+    if (error) {
+      console.error('Error updating goal progress:', error);
+    }
+  };
 
   return (
     <Card 
@@ -67,6 +81,22 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
       <div className="mt-4 text-sm text-gray-500">
         Target Date: {new Date(goal.target_date).toLocaleDateString()}
       </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowSubgoals(!showSubgoals)}
+        className="w-full mt-4 flex items-center justify-between"
+      >
+        {showSubgoals ? "Hide Subgoals" : "Show Subgoals"}
+        {showSubgoals ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      </Button>
+
+      {showSubgoals && (
+        <div className="mt-4">
+          <SubgoalsList goalId={goal.id} onProgressUpdate={updateGoalProgress} />
+        </div>
+      )}
 
       <div className="mt-4">
         <Button
