@@ -3,6 +3,7 @@ import { GoalCard } from "./GoalCard";
 import { EditGoalDialog } from "./EditGoalDialog";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 interface Goal {
   id: number;
@@ -78,16 +79,22 @@ export const GoalsList = ({ goals, setGoals }: GoalsListProps) => {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {goals.map((goal) => (
-        <GoalCard
+      {goals.map((goal, index) => (
+        <motion.div
           key={goal.id}
-          goal={goal}
-          onDelete={handleDeleteGoal}
-          onEdit={() => setEditingGoal(goal)}
-        />
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.1 }}
+        >
+          <GoalCard
+            goal={goal}
+            onDelete={handleDeleteGoal}
+            onEdit={() => setEditingGoal(goal)}
+          />
+        </motion.div>
       ))}
       {goals.length === 0 && (
-        <div className="col-span-2 text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
+        <div className="col-span-2 text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
           <p className="text-gray-500">No goals yet. Add your first goal to get started!</p>
         </div>
       )}
