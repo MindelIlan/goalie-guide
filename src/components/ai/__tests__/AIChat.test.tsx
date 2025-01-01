@@ -1,7 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { AIChat } from '../AIChat';
 import { generateAIResponse } from '@/lib/ai/chat-service';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { Message, Goal } from '@/types/goals';
 
 // Mock the chat service
 vi.mock('@/lib/ai/chat-service', () => ({
@@ -17,9 +19,9 @@ vi.mock('@/components/ui/use-toast', () => ({
 
 describe('AIChat', () => {
   const mockProps = {
-    messages: [],
+    messages: [] as Message[],
     setMessages: vi.fn(),
-    userGoals: [],
+    userGoals: [] as Goal[],
     isLoading: false,
     setIsLoading: vi.fn()
   };
@@ -45,7 +47,7 @@ describe('AIChat', () => {
 
   it('sends message and updates state correctly', async () => {
     const mockResponse = 'AI response';
-    (generateAIResponse as jest.Mock).mockResolvedValueOnce(mockResponse);
+    (generateAIResponse as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockResponse);
 
     render(<AIChat {...mockProps} />);
     
@@ -60,7 +62,7 @@ describe('AIChat', () => {
   });
 
   it('handles API errors correctly', async () => {
-    (generateAIResponse as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
+    (generateAIResponse as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('API Error'));
 
     render(<AIChat {...mockProps} />);
     
