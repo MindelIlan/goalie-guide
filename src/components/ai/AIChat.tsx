@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Copy, CheckCircle2 } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { generateAIResponse } from "@/lib/ai/chat-service";
 import { Message, Goal } from "@/types/goals";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AIChatProps {
   messages: Message[];
@@ -24,15 +25,29 @@ export const AIChat = ({
   setIsLoading 
 }: AIChatProps) => {
   const [input, setInput] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   const handleError = (error: Error) => {
     console.error('Chat Error:', error);
+    setError(error.message);
     toast({
       title: "Error",
       description: "Failed to send message. Please try again.",
       variant: "destructive",
     });
+  };
+
+  const copyError = async () => {
+    if (error) {
+      await navigator.clipboard.writeText(error);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        description: "Error message copied to clipboard",
+      });
+    }
   };
 
   const validateInput = (text: string): boolean => {
@@ -49,6 +64,7 @@ export const AIChat = ({
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     try {
       if (!validateInput(input) || isLoading) return;
@@ -91,6 +107,25 @@ export const AIChat = ({
     <>
       <ScrollArea className="flex-1 pr-4 mb-4">
         <div className="space-y-4">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription className="flex items-center justify-between">
+                <span className="font-mono text-sm whitespace-pre-wrap">{error}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={copyError}
+                  className="h-8 w-8"
+                >
+                  {copied ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           {messages.map((message, index) => (
             <div key={index}>
               <ChatMessage {...message} />
