@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Auth } from './Auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { User, Session, Provider } from '@supabase/supabase-js';
 
 // Mock the supabase client
 vi.mock('@/lib/supabase', () => ({
@@ -38,7 +39,12 @@ describe('Auth Component', () => {
   });
 
   it('handles sign up successfully', async () => {
-    vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({ data: {}, error: null });
+    const mockUser = { id: '123', email: 'test@example.com' } as User;
+    const mockSession = { user: mockUser } as Session;
+    vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({ 
+      data: { user: mockUser, session: mockSession }, 
+      error: null 
+    });
 
     render(<Auth />);
     
@@ -67,7 +73,12 @@ describe('Auth Component', () => {
   });
 
   it('handles sign in successfully', async () => {
-    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({ data: {}, error: null });
+    const mockUser = { id: '123', email: 'test@example.com' } as User;
+    const mockSession = { user: mockUser } as Session;
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({ 
+      data: { user: mockUser, session: mockSession }, 
+      error: null 
+    });
 
     render(<Auth />);
     
@@ -89,7 +100,10 @@ describe('Auth Component', () => {
   });
 
   it('handles Google sign in', async () => {
-    vi.mocked(supabase.auth.signInWithOAuth).mockResolvedValueOnce({ data: {}, error: null });
+    vi.mocked(supabase.auth.signInWithOAuth).mockResolvedValueOnce({ 
+      data: { provider: 'google' as Provider, url: 'https://example.com' }, 
+      error: null 
+    });
 
     render(<Auth />);
     fireEvent.click(screen.getByText('Google'));
