@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, Share2 } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { GoalsList } from "@/components/GoalsList";
 import { AIAssistant } from "@/components/AIAssistant";
 import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
@@ -134,20 +134,11 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={handleShare}
-                size="icon"
-                className="hover:bg-gray-100"
-                title="Share Project"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
               <NotificationsPopover />
               <Button 
-                variant="outline" 
+                variant="destructive"
                 onClick={handleSignOut} 
-                className="gap-2 hover:bg-gray-100"
+                className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out
