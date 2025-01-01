@@ -4,28 +4,18 @@ import { Card } from "@/components/ui/card";
 import { User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+interface Profile {
+  id: string;
+  avatar_url: string | null;
+  description: string | null;
+}
+
 interface SimilarGoal {
   id: number;
   title: string;
   description: string;
   progress: number;
-  user: {
-    id: string;
-    avatar_url: string | null;
-    description: string | null;
-  };
-}
-
-interface GoalWithProfile {
-  id: number;
-  title: string;
-  description: string;
-  progress: number;
-  profiles: {
-    id: string;
-    avatar_url: string | null;
-    description: string | null;
-  };
+  profiles: Profile;
 }
 
 export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
@@ -36,37 +26,35 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
   }, [goalTitle]);
 
   const fetchSimilarGoals = async () => {
-    const { data: goals, error } = await supabase
-      .from('goals')
-      .select(`
-        id,
-        title,
-        description,
-        progress,
-        profiles!inner (
+    try {
+      console.log("Fetching similar goals for title:", goalTitle);
+      const { data: goals, error } = await supabase
+        .from('goals')
+        .select(`
           id,
-          avatar_url,
-          description
-        )
-      `)
-      .ilike('title', `%${goalTitle}%`)
-      .limit(5);
+          title,
+          description,
+          progress,
+          profiles (
+            id,
+            avatar_url,
+            description
+          )
+        `)
+        .ilike('title', `%${goalTitle}%`)
+        .limit(5);
 
-    if (error) {
-      console.error("Error fetching similar goals:", error);
-    } else if (goals) {
-      const formattedGoals = (goals as GoalWithProfile[]).map(goal => ({
-        id: goal.id,
-        title: goal.title,
-        description: goal.description,
-        progress: goal.progress,
-        user: {
-          id: goal.profiles.id,
-          avatar_url: goal.profiles.avatar_url,
-          description: goal.profiles.description
-        }
-      }));
-      setSimilarGoals(formattedGoals);
+      if (error) {
+        console.error("Error fetching similar goals:", error);
+        return;
+      }
+
+      console.log("Fetched goals:", goals);
+      if (goals) {
+        setSimilarGoals(goals);
+      }
+    } catch (error) {
+      console.error("Error in fetchSimilarGoals:", error);
     }
   };
 
@@ -80,15 +68,19 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           <Card key={goal.id} className="p-4">
             <div className="flex items-start gap-4">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={goal.user.avatar_url || ""} />
+                <AvatarImage src={goal.profiles?.avatar_url || ""} />
                 <AvatarFallback>
                   <User className="w-6 h-6" />
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h5 className="font-medium">{goal.title}</h5>
-                <p className="text-sm text-gray-600 mt-1">{goal.user.description || "No description available"}</p>
-                <div className="text-sm text-gray-500 mt-2">Progress: {goal.progress}%</div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {goal.profiles?.description || "No description available"}
+                </p>
+                <div className="text-sm text-gray-500 mt-2">
+                  Progress: {goal.progress}%
+                </div>
               </div>
             </div>
           </Card>
