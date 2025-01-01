@@ -50,6 +50,36 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: number
+          message: string | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -94,6 +124,38 @@ export type Database = {
           secret?: string
         }
         Relationships: []
+      }
+      shared_goals: {
+        Row: {
+          created_at: string
+          goal_id: number | null
+          id: number
+          shared_by: string | null
+          shared_with: string | null
+        }
+        Insert: {
+          created_at?: string
+          goal_id?: number | null
+          id?: number
+          shared_by?: string | null
+          shared_with?: string | null
+        }
+        Update: {
+          created_at?: string
+          goal_id?: number | null
+          id?: number
+          shared_by?: string | null
+          shared_with?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_goals_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subgoals: {
         Row: {
