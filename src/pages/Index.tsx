@@ -7,6 +7,7 @@ import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { EditGoalDialog } from "@/components/EditGoalDialog";
 
 interface Goal {
   id: number;
@@ -20,6 +21,7 @@ interface Goal {
 const Index = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [user, setUser] = useState(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,7 +69,7 @@ const Index = () => {
     const goal = {
       title: newGoal.title,
       description: newGoal.description,
-      target_date: newGoal.target_date,  // Changed from targetDate to target_date
+      target_date: newGoal.target_date,
       progress: 0,
       user_id: user.id,
     };
@@ -114,11 +116,33 @@ const Index = () => {
     }
   };
 
-  const handleEditGoal = async (id: number) => {
-    toast({
-      title: "Coming Soon",
-      description: "Goal editing will be available in the next update!",
-    });
+  const handleEditGoal = async (id: number, updatedGoal: Omit<Goal, "id" | "progress" | "user_id">) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('goals')
+      .update({
+        title: updatedGoal.title,
+        description: updatedGoal.description,
+        target_date: updatedGoal.target_date
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update goal",
+        variant: "destructive",
+      });
+    } else {
+      setGoals(goals.map(goal => goal.id === id ? { ...goal, ...data } : goal));
+      toast({
+        title: "Success",
+        description: "Goal updated successfully!",
+      });
+    }
   };
 
   const handleSignOut = async () => {
@@ -166,7 +190,7 @@ const Index = () => {
               key={goal.id}
               goal={goal}
               onDelete={handleDeleteGoal}
-              onEdit={handleEditGoal}
+              onEdit={() => setEditingGoal(goal)}
             />
           ))}
           {goals.length === 0 && (
@@ -175,6 +199,15 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        {editingGoal && (
+          <EditGoalDialog
+            goal={editingGoal}
+            open={!!editingGoal}
+            onOpenChange={(open) => !open && setEditingGoal(null)}
+            onEditGoal={handleEditGoal}
+          />
+        )}
       </div>
     </div>
   );
