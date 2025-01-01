@@ -42,7 +42,10 @@ export const SubgoalsList = ({ goalId, onProgressUpdate }: SubgoalsListProps) =>
   };
 
   const updateProgress = (currentSubgoals: Subgoal[]) => {
-    if (currentSubgoals.length === 0) return;
+    if (currentSubgoals.length === 0) {
+      onProgressUpdate(0);
+      return;
+    }
     const completedCount = currentSubgoals.filter(sg => sg.completed).length;
     const progress = Math.round((completedCount / currentSubgoals.length) * 100);
     onProgressUpdate(progress);
@@ -64,30 +67,37 @@ export const SubgoalsList = ({ goalId, onProgressUpdate }: SubgoalsListProps) =>
         variant: "destructive",
       });
     } else {
-      setSubgoals([...subgoals, data]);
+      const updatedSubgoals = [...subgoals, data];
+      setSubgoals(updatedSubgoals);
       setNewSubgoal("");
-      updateProgress([...subgoals, data]);
+      updateProgress(updatedSubgoals);
     }
   };
 
   const toggleSubgoal = async (subgoalId: number, completed: boolean) => {
+    // Optimistically update the UI
+    const updatedSubgoals = subgoals.map(sg =>
+      sg.id === subgoalId ? { ...sg, completed } : sg
+    );
+    setSubgoals(updatedSubgoals);
+    updateProgress(updatedSubgoals);
+
     const { error } = await supabase
       .from("subgoals")
       .update({ completed })
       .eq("id", subgoalId);
 
     if (error) {
+      // Revert the optimistic update if there's an error
+      const originalSubgoals = subgoals;
+      setSubgoals(originalSubgoals);
+      updateProgress(originalSubgoals);
+      
       toast({
         title: "Error",
         description: "Failed to update subgoal",
         variant: "destructive",
       });
-    } else {
-      const updatedSubgoals = subgoals.map(sg =>
-        sg.id === subgoalId ? { ...sg, completed } : sg
-      );
-      setSubgoals(updatedSubgoals);
-      updateProgress(updatedSubgoals);
     }
   };
 
