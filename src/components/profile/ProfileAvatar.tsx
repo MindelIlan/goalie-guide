@@ -1,20 +1,20 @@
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, User, Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 
 interface ProfileAvatarProps {
   userId: string;
-  avatarUrl: string | null;
-  onAvatarUpdate: (url: string) => void;
+  avatarUrl?: string | null;
+  onAvatarChange?: (url: string) => void;
 }
 
-export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvatarProps) => {
-  const { toast } = useToast();
+export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvatarProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -30,7 +30,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     setIsUploading(true);
     toast({
       title: "Uploading...",
-      description: "Your profile image is being uploaded",
+      description: "Your profile picture is being uploaded",
     });
 
     try {
@@ -38,7 +38,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       const filePath = `${userId}/${Math.random()}.${fileExt}`;
 
       // Upload the file to Supabase storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
           upsert: true,
@@ -64,10 +64,10 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         throw updateError;
       }
 
-      onAvatarUpdate(publicUrl);
+      onAvatarChange?.(publicUrl);
       toast({
         title: "Success",
-        description: "Profile image updated successfully",
+        description: "Profile picture updated successfully",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -82,11 +82,11 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
   };
 
   return (
-    <div className="relative">
-      <Avatar className="w-24 h-24">
-        <AvatarImage src={avatarUrl || ""} />
+    <div className="relative inline-block">
+      <Avatar className="h-24 w-24">
+        <AvatarImage src={avatarUrl || ""} alt="Profile picture" />
         <AvatarFallback>
-          <User className="w-12 h-12" />
+          {userId.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <label
@@ -98,14 +98,14 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         {isUploading ? (
           <Loader2 className="w-4 h-4 text-white animate-spin" />
         ) : (
-          <Camera className="w-4 h-4 text-white" />
+          <Upload className="w-4 h-4 text-white" />
         )}
         <input
           id="avatar-upload"
           type="file"
           accept="image/*"
+          onChange={handleFileChange}
           className="hidden"
-          onChange={handleImageUpload}
           disabled={isUploading}
         />
       </label>
