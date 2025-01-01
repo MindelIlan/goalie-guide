@@ -116,7 +116,7 @@ const Index = () => {
               className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
             />
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">My 2024 Goals</h1>
+              <h1 className="text-4xl font-bold text-gray-900">My 2025 Goals</h1>
               <p className="text-gray-600">Welcome, {user.email}</p>
             </div>
           </div>

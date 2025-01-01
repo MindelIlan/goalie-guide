@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Share2 } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
+import { ShareGoalDialog } from "./ShareGoalDialog";
 
 interface GoalCardProps {
   goal: {
@@ -22,6 +23,7 @@ interface GoalCardProps {
 export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showSimilar, setShowSimilar] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   return (
     <Card 
@@ -42,6 +44,9 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
           </div>
         </div>
         <div className={`flex gap-2 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <Button variant="ghost" size="icon" onClick={() => setShowShareDialog(true)}>
+            <Share2 className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => onEdit(goal.id)}>
             <Pencil className="h-4 w-4" />
           </Button>
@@ -74,6 +79,13 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
         </Button>
         {showSimilar && <SimilarGoals goalTitle={goal.title} />}
       </div>
+
+      <ShareGoalDialog
+        goalId={goal.id}
+        goalTitle={goal.title}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
     </Card>
   );
 };
