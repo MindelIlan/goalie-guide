@@ -18,6 +18,15 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     toast({
       title: "Uploading...",
@@ -25,31 +34,22 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     });
 
     try {
-      // Get the current session to ensure we're authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("You must be authenticated to upload images");
-      }
-
-      // Ensure we're only updating our own profile
-      if (session.user.id !== userId) {
-        throw new Error("You can only update your own profile");
-      }
-
       const fileExt = file.name.split(".").pop();
       const filePath = `${userId}/${Math.random()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      // Upload the file to Supabase storage
+      const { error: uploadError, data } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
-          upsert: true
+          upsert: true,
+          contentType: file.type,
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
         .getPublicUrl(filePath);
@@ -58,8 +58,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
-        .eq("id", userId)
-        .single();
+        .eq("id", userId);
 
       if (updateError) {
         throw updateError;
@@ -74,7 +73,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to upload image. Please try again later.",
+        description: error instanceof Error ? error.message : "Failed to upload image",
         variant: "destructive",
       });
     } finally {
@@ -92,7 +91,9 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
       </Avatar>
       <label
         htmlFor="avatar-upload"
-        className={`absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer hover:bg-primary/90 transition-colors ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
+        className={`absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer hover:bg-primary/90 transition-colors ${
+          isUploading ? "pointer-events-none opacity-50" : ""
+        }`}
       >
         {isUploading ? (
           <Loader2 className="w-4 h-4 text-white animate-spin" />
