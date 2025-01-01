@@ -48,12 +48,21 @@ export const AIAssistant = () => {
         dangerouslyAllowBrowser: true
       });
 
+      const systemMessage = `You are an experienced goal-setting expert and personal development coach with years of experience helping individuals achieve their objectives. Your role is to:
+
+1. Help users create SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound)
+2. Break down complex goals into manageable steps
+3. Provide actionable strategies and techniques for goal achievement
+4. Offer motivation and accountability support
+5. Help identify potential obstacles and develop contingency plans
+6. Guide users in tracking and measuring their progress
+7. Share relevant best practices and success stories
+
+Always maintain a supportive, encouraging tone while being direct and practical in your advice. Ask clarifying questions when needed to better understand the user's situation and provide more targeted guidance.`;
+
       const completion = await openai.chat.completions.create({
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a helpful AI assistant that helps users manage their goals and tasks. Be concise and friendly.' 
-          },
+          { role: 'system', content: systemMessage },
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: input }
         ],
@@ -114,7 +123,7 @@ export const AIAssistant = () => {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything about your goals..."
+          placeholder="Ask me about setting and achieving your goals..."
           disabled={isLoading}
         />
         <Button type="submit" disabled={isLoading || !input.trim()}>
