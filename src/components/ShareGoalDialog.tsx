@@ -19,13 +19,16 @@ export const ShareGoalDialog = ({ goalId, goalTitle, open, onOpenChange }: Share
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { data: existingUser, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .single();
+    // First, get the user ID from auth.users using their email
+    const { data: userData, error: userError } = await supabase.auth
+      .admin
+      .listUsers({
+        filters: {
+          email: email
+        }
+      });
 
-    if (userError || !existingUser) {
+    if (userError || !userData?.users?.length) {
       toast({
         title: "Error",
         description: "User not found. Please check the email address.",
@@ -34,12 +37,14 @@ export const ShareGoalDialog = ({ goalId, goalTitle, open, onOpenChange }: Share
       return;
     }
 
+    const userId = userData.users[0].id;
+
     const { error: shareError } = await supabase
       .from('shared_goals')
       .insert([
         {
           goal_id: goalId,
-          shared_with: existingUser.id,
+          shared_with: userId,
         }
       ]);
 

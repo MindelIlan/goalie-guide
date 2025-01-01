@@ -17,6 +17,7 @@ interface GoalCardProps {
     progress: number;
     target_date: string;
     tags: string[];
+    created_at: string;
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;

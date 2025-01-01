@@ -11,6 +11,7 @@ interface Goal {
   progress: number;
   target_date: string;
   tags: string[];
+  created_at: string;
 }
 
 interface GoalsListProps {
