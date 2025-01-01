@@ -23,17 +23,40 @@ export const Profile = ({ userId }: { userId: string }) => {
   }, [userId]);
 
   const fetchProfile = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      // First try to get the profile
+      let { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
-    } else if (data) {
-      setProfile(data);
-      setNewDescription(data.description || "");
+      // If no profile exists, create one
+      if (!data && !error) {
+        const { data: newProfile, error: insertError } = await supabase
+          .from("profiles")
+          .insert([{ id: userId }])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          return;
+        }
+
+        data = newProfile;
+      } else if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+
+      // Set the profile data
+      if (data) {
+        setProfile(data);
+        setNewDescription(data.description || "");
+      }
+    } catch (error) {
+      console.error("Error in fetchProfile:", error);
     }
   };
 
