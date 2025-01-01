@@ -24,12 +24,14 @@ export const Profile = ({ userId }: { userId: string }) => {
   const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!userId) return; // Add guard clause for empty userId
     fetchProfile();
     fetchGoalsProgress();
   }, [userId]);
 
   const fetchProfile = async () => {
     try {
+      // First check if profile exists
       let { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -37,6 +39,7 @@ export const Profile = ({ userId }: { userId: string }) => {
         .maybeSingle();
 
       if (!data && !error) {
+        // If no profile exists, create one
         const { data: newProfile, error: insertError } = await supabase
           .from("profiles")
           .insert([{ id: userId }])
