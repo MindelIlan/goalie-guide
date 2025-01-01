@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Bot, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
@@ -29,6 +29,7 @@ export const AIAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userGoals, setUserGoals] = useState<Goal[]>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     fetchUserGoals();
@@ -131,11 +132,39 @@ Always maintain a supportive, encouraging tone while being direct and practical 
     }
   };
 
+  if (!isExpanded) {
+    return (
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed bottom-4 right-4 rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-300"
+        onClick={() => setIsExpanded(true)}
+      >
+        <Bot className="h-6 w-6" />
+      </Button>
+    );
+  }
+
   return (
-    <Card className="w-full max-w-2xl mx-auto p-4 shadow-lg">
+    <Card className="fixed bottom-4 right-4 w-[400px] h-[600px] p-4 shadow-lg flex flex-col animate-fade-in">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5" />
+          <h3 className="font-semibold">AI Assistant</h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setIsExpanded(false)}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
       {showDisclaimer && <AIDisclaimer />}
 
-      <ScrollArea className="h-[400px] pr-4 mb-4">
+      <ScrollArea className="flex-1 pr-4 mb-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
             <ChatMessage key={index} {...message} />
@@ -154,7 +183,7 @@ Always maintain a supportive, encouraging tone while being direct and practical 
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask me about setting and achieving your goals..."
+          placeholder="Ask me about your goals..."
           disabled={isLoading}
         />
         <Button type="submit" disabled={isLoading || !input.trim()}>
