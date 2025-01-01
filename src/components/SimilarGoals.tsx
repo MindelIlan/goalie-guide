@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
@@ -20,6 +21,7 @@ interface SimilarGoal {
 
 export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
   const [similarGoals, setSimilarGoals] = useState<SimilarGoal[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSimilarGoals();
@@ -59,6 +61,15 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
         })) as SimilarGoal[];
         
         setSimilarGoals(formattedGoals);
+
+        // Show toast message if no similar goals are found
+        if (formattedGoals.length === 0) {
+          toast({
+            title: "No similar goals found",
+            description: "Be the first one to create a goal like this! Others might join you soon.",
+            duration: 5000,
+          });
+        }
       }
     } catch (error) {
       console.error("Error in fetchSimilarGoals:", error);
