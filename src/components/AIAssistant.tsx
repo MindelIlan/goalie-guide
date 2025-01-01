@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, MessageCircle, Bot, AlertTriangle } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AIDisclaimer } from "./ai/AIDisclaimer";
+import { ChatMessage } from "./ai/ChatMessage";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +28,7 @@ export const AIAssistant = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userGoals, setUserGoals] = useState<Goal[]>([]);
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
 
   useEffect(() => {
     fetchUserGoals();
@@ -49,6 +51,7 @@ export const AIAssistant = () => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    setShowDisclaimer(false);
     const userMessage = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -115,6 +118,7 @@ Always maintain a supportive, encouraging tone while being direct and practical 
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -129,48 +133,12 @@ Always maintain a supportive, encouraging tone while being direct and practical 
 
   return (
     <Card className="w-full max-w-2xl mx-auto p-4 shadow-lg">
-      <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200">
-        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-sm text-yellow-700">
-          Please note that the AI's responses are for guidance purposes only and may not always be accurate. 
-          It's recommended to verify any specific advice before taking action.
-        </AlertDescription>
-      </Alert>
+      {showDisclaimer && <AIDisclaimer />}
 
       <ScrollArea className="h-[400px] pr-4 mb-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`flex items-start gap-2 max-w-[80%] ${
-                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                }`}
-              >
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'
-                }`}>
-                  {message.role === 'user' ? (
-                    <MessageCircle className="h-4 w-4 text-blue-500" />
-                  ) : (
-                    <Bot className="h-4 w-4 text-gray-600" />
-                  )}
-                </div>
-                <div
-                  className={`p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              </div>
-            </div>
+            <ChatMessage key={index} {...message} />
           ))}
           {isLoading && (
             <div className="flex justify-start">
