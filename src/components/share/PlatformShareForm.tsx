@@ -27,22 +27,22 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
       if (authError) throw new Error('Authentication error');
       if (!user) throw new Error('Not authenticated');
 
-      // Find user by email
-      const { data: userData, error: userError } = await supabase
+      // Find user profile by email
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('id', email)
+        .eq('email', email)
         .maybeSingle();
 
-      if (userError) throw new Error('Failed to find user');
-      if (!userData) throw new Error('User not found. Please check the email address.');
+      if (profileError) throw new Error('Failed to find user');
+      if (!profileData) throw new Error('User not found. Please check the email address.');
 
       // Check for existing share
       const { data: existingShare, error: existingError } = await supabase
         .from('shared_goals')
         .select('id')
         .eq('goal_id', goalId)
-        .eq('shared_with', userData.id)
+        .eq('shared_with', profileData.id)
         .maybeSingle();
 
       if (existingError) throw new Error('Failed to check existing shares');
@@ -53,7 +53,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .from('shared_goals')
         .insert([{
           goal_id: goalId,
-          shared_with: userData.id,
+          shared_with: profileData.id,
           shared_by: user.id
         }]);
 
@@ -63,7 +63,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert([{
-          user_id: userData.id,
+          user_id: profileData.id,
           type: 'goal_shared',
           title: 'New Goal Shared With You',
           message: `${user.email} shared their goal "${goalTitle}" with you`
