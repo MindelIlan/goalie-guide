@@ -24,9 +24,39 @@ export const ProfileDescription = ({
   const [newDescription, setNewDescription] = useState(description || "");
   const [apiKey, setApiKey] = useState(openai_api_key || "");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const validateApiKey = (key: string): boolean => {
+    if (!key) return true; // Allow empty key
+    if (!key.startsWith('sk-')) {
+      setApiKeyError('OpenAI API key must start with "sk-"');
+      return false;
+    }
+    if (key.length < 40) {
+      setApiKeyError('OpenAI API key is too short');
+      return false;
+    }
+    setApiKeyError(null);
+    return true;
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newKey = e.target.value;
+    setApiKey(newKey);
+    validateApiKey(newKey);
+  };
+
   const handleSaveDescription = async () => {
+    if (!validateApiKey(apiKey)) {
+      toast({
+        title: "Invalid API Key",
+        description: apiKeyError,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("profiles")
@@ -74,9 +104,9 @@ export const ProfileDescription = ({
             id="openai-key"
             type={showApiKey ? "text" : "password"}
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={handleApiKeyChange}
             placeholder="sk-..."
-            className="pr-10"
+            className={`pr-10 ${apiKeyError ? 'border-red-500' : ''}`}
           />
           <button
             type="button"
@@ -90,6 +120,9 @@ export const ProfileDescription = ({
             )}
           </button>
         </div>
+        {apiKeyError && (
+          <p className="text-sm text-red-500">{apiKeyError}</p>
+        )}
         <p className="text-sm text-gray-500">
           Your private API key will be securely stored and used for AI features.
         </p>
