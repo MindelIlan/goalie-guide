@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { GoalCard } from "@/components/GoalCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,8 +12,17 @@ interface Goal {
 }
 
 const Index = () => {
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goals, setGoals] = useState<Goal[]>(() => {
+    // Initialize state from localStorage
+    const savedGoals = localStorage.getItem('goals');
+    return savedGoals ? JSON.parse(savedGoals) : [];
+  });
   const { toast } = useToast();
+
+  // Save goals to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('goals', JSON.stringify(goals));
+  }, [goals]);
 
   const handleAddGoal = (newGoal: Omit<Goal, "id" | "progress">) => {
     const goal = {
