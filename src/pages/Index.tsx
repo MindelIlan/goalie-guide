@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Share2 } from "lucide-react";
 import { GoalsList } from "@/components/GoalsList";
 import { AIAssistant } from "@/components/AIAssistant";
 import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
@@ -105,6 +105,14 @@ const Index = () => {
     });
   };
 
+  const handleShare = () => {
+    window.open('https://github.com/new', '_blank');
+    toast({
+      title: "Share Project",
+      description: "Create a new repository and import your project to share it!",
+    });
+  };
+
   if (!user) {
     return <Auth />;
   }
@@ -126,6 +134,14 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="gap-2 hover:bg-gray-100"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Project
+              </Button>
               <NotificationsPopover />
               <Button 
                 variant="outline" 
