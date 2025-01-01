@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { GoalCard } from "@/components/GoalCard";
+import { Profile } from "@/components/Profile";
 import { useToast } from "@/components/ui/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
@@ -12,7 +13,7 @@ interface Goal {
   title: string;
   description: string;
   progress: number;
-  target_date: string;  // Changed from targetDate to target_date
+  target_date: string;
   user_id: string;
 }
 
@@ -152,6 +153,8 @@ const Index = () => {
             Sign Out
           </Button>
         </div>
+
+        <Profile userId={user.id} />
 
         <div className="mb-8 text-center">
           <AddGoalDialog onAddGoal={handleAddGoal} />
