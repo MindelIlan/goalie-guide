@@ -3,11 +3,16 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { ProfileDescription } from "./profile/ProfileDescription";
+import { Progress } from "@/components/ui/progress";
 
 interface ProfileData {
   avatar_url: string | null;
   description: string | null;
   openai_api_key: string | null;
+}
+
+interface Goal {
+  progress: number;
 }
 
 export const Profile = ({ userId }: { userId: string }) => {
@@ -16,9 +21,11 @@ export const Profile = ({ userId }: { userId: string }) => {
     description: null,
     openai_api_key: null
   });
+  const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
   useEffect(() => {
     fetchProfile();
+    fetchGoalsProgress();
   }, [userId]);
 
   const fetchProfile = async () => {
@@ -55,6 +62,30 @@ export const Profile = ({ userId }: { userId: string }) => {
     }
   };
 
+  const fetchGoalsProgress = async () => {
+    try {
+      const { data: goals, error } = await supabase
+        .from("goals")
+        .select("progress")
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error fetching goals:", error);
+        return;
+      }
+
+      if (goals && goals.length > 1) {
+        const totalProgress = goals.reduce((sum, goal) => sum + (goal.progress || 0), 0);
+        const averageProgress = Math.round(totalProgress / goals.length);
+        setOverallProgress(averageProgress);
+      } else {
+        setOverallProgress(null);
+      }
+    } catch (error) {
+      console.error("Error in fetchGoalsProgress:", error);
+    }
+  };
+
   const handleAvatarUpdate = (url: string) => {
     setProfile({ ...profile, avatar_url: url });
   };
@@ -71,12 +102,27 @@ export const Profile = ({ userId }: { userId: string }) => {
           avatarUrl={profile.avatar_url}
           onAvatarChange={handleAvatarUpdate}
         />
-        <ProfileDescription
-          userId={userId}
-          description={profile.description}
-          openai_api_key={profile.openai_api_key}
-          onDescriptionUpdate={handleDescriptionUpdate}
-        />
+        <div className="w-full">
+          {overallProgress !== null && (
+            <div className="mb-4 space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Overall Goals Progress</span>
+                <span>{overallProgress}%</span>
+              </div>
+              <Progress 
+                value={overallProgress} 
+                className="h-2"
+                indicatorClassName="bg-primary transition-all"
+              />
+            </div>
+          )}
+          <ProfileDescription
+            userId={userId}
+            description={profile.description}
+            openai_api_key={profile.openai_api_key}
+            onDescriptionUpdate={handleDescriptionUpdate}
+          />
+        </div>
       </div>
     </Card>
   );
