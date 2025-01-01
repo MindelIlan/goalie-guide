@@ -27,10 +27,15 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
       if (authError) throw new Error('Authentication error');
       if (!user) throw new Error('Not authenticated');
 
+      // Prevent sharing with yourself
+      if (user.email === email) {
+        throw new Error("You cannot share a goal with yourself");
+      }
+
       // Find user profile by email
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email')
         .eq('email', email)
         .maybeSingle();
 
@@ -45,7 +50,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .eq('shared_with', profileData.id)
         .maybeSingle();
 
-      if (existingError && existingError.code !== 'PGRST116') throw new Error('Failed to check existing shares');
+      if (existingError) throw new Error('Failed to check existing shares');
       if (existingShare) throw new Error('Goal already shared with this user');
 
       // Share the goal
