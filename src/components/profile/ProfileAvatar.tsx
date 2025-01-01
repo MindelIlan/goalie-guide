@@ -32,18 +32,21 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         throw new Error("You must be authenticated to upload images");
       }
 
+      // Ensure we're only updating our own profile
+      if (session.user.id !== userId) {
+        throw new Error("You can only update your own profile");
+      }
+
       const fileExt = file.name.split(".").pop();
-      // Use the authenticated user's ID in the file path
-      const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
+      const filePath = `${userId}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
-          upsert: true // Enable upsert to replace existing files
+          upsert: true
         });
 
       if (uploadError) {
-        console.error("Upload error:", uploadError);
         throw uploadError;
       }
 
@@ -51,12 +54,14 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
         .from("profile_images")
         .getPublicUrl(filePath);
 
+      // Update the profile with the new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
-        .upsert({ id: userId, avatar_url: publicUrl });
+        .update({ avatar_url: publicUrl })
+        .eq("id", userId)
+        .single();
 
       if (updateError) {
-        console.error("Update error:", updateError);
         throw updateError;
       }
 
