@@ -137,10 +137,11 @@ const Index = () => {
               <Button
                 variant="outline"
                 onClick={handleShare}
-                className="gap-2 hover:bg-gray-100"
+                size="icon"
+                className="hover:bg-gray-100"
+                title="Share Project"
               >
                 <Share2 className="h-4 w-4" />
-                Share Project
               </Button>
               <NotificationsPopover />
               <Button 
