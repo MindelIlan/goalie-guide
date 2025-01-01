@@ -25,10 +25,8 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY is not set in environment variables");
-      throw new Error("RESEND_API_KEY is not configured");
+      throw new Error("Email service is not configured properly");
     }
-
-    console.log("RESEND_API_KEY is configured correctly");
 
     // Parse request body
     const emailRequest: EmailRequest = await req.json();
@@ -50,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Goal Tracker <onboarding@resend.dev>",
+        from: senderEmail, // Use sender's email if domain is verified
         to: [recipientEmail],
         subject: `${senderEmail} shared a goal with you: ${goalTitle}`,
         html: `
@@ -67,6 +65,20 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Resend API response:', resData);
 
     if (!res.ok) {
+      // Check if the error is related to domain verification
+      if (resData.statusCode === 403 && resData.message?.includes('verify a domain')) {
+        return new Response(
+          JSON.stringify({
+            error: "Domain not verified",
+            message: "Please verify your domain at resend.com/domains before sending emails",
+            details: resData
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
       throw new Error(`Resend API error: ${JSON.stringify(resData)}`);
     }
 
