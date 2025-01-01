@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { SimilarGoals } from "./SimilarGoals";
 
 interface GoalCardProps {
   goal: {
@@ -10,7 +11,7 @@ interface GoalCardProps {
     title: string;
     description: string;
     progress: number;
-    target_date: string;  // Changed from targetDate to target_date
+    target_date: string;
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
@@ -18,6 +19,7 @@ interface GoalCardProps {
 
 export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showSimilar, setShowSimilar] = useState(false);
 
   return (
     <Card 
@@ -50,6 +52,18 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
       
       <div className="mt-4 text-sm text-gray-500">
         Target Date: {new Date(goal.target_date).toLocaleDateString()}
+      </div>
+
+      <div className="mt-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowSimilar(!showSimilar)}
+          className="text-sm text-blue-600 hover:text-blue-700"
+        >
+          {showSimilar ? "Hide Similar Goals" : "Show Similar Goals"}
+        </Button>
+        {showSimilar && <SimilarGoals goalTitle={goal.title} />}
       </div>
     </Card>
   );
