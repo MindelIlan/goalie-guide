@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlatformShareForm } from '../PlatformShareForm';
 import { supabase } from '@/lib/supabase';
-import { vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { User } from '@supabase/supabase-js';
 
 // Mock Supabase client
 vi.mock('@/lib/supabase', () => ({
@@ -15,9 +16,7 @@ vi.mock('@/lib/supabase', () => ({
           maybeSingle: vi.fn(),
         })),
       })),
-      insert: vi.fn(() => ({
-        select: vi.fn(),
-      })),
+      insert: vi.fn(() => Promise.resolve({ error: null })),
     })),
   },
 }));
@@ -27,6 +26,27 @@ describe('PlatformShareForm', () => {
     goalId: 1,
     goalTitle: 'Test Goal',
     onSuccess: vi.fn(),
+  };
+
+  const mockUser: User = {
+    id: 'test-user-id',
+    email: 'current@example.com',
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: '2024-01-01T00:00:00.000Z',
+    role: '',
+    aal: '',
+    amr: [{ method: '', timestamp: 0 }],
+    last_sign_in_at: '',
+    session_id: '',
+    phone: '',
+    confirmed_at: '',
+    email_confirmed_at: '',
+    phone_confirmed_at: '',
+    last_password_change: '',
+    factors: [],
+    updated_at: '',
   };
 
   beforeEach(() => {
@@ -41,16 +61,15 @@ describe('PlatformShareForm', () => {
   });
 
   it('shows error when sharing with own email', async () => {
-    const userEmail = 'test@example.com';
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: { email: userEmail } },
+      data: { user: mockUser },
       error: null,
     });
 
     render(<PlatformShareForm {...mockProps} />);
     
     const emailInput = screen.getByLabelText(/user's email/i);
-    fireEvent.change(emailInput, { target: { value: userEmail } });
+    fireEvent.change(emailInput, { target: { value: mockUser.email } });
     
     const submitButton = screen.getByRole('button', { name: /share goal/i });
     fireEvent.click(submitButton);
@@ -62,7 +81,7 @@ describe('PlatformShareForm', () => {
 
   it('shows error when user not found', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: { email: 'current@example.com' } },
+      data: { user: mockUser },
       error: null,
     });
 
@@ -90,7 +109,7 @@ describe('PlatformShareForm', () => {
 
   it('calls onSuccess when share is successful', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
-      data: { user: { email: 'current@example.com' } },
+      data: { user: mockUser },
       error: null,
     });
 
