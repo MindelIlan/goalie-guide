@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
           <h2>You've been invited to view a goal!</h2>
           <p>${senderEmail} has shared their goal "${goalTitle}" with you.</p>
           <p>To view this goal, please sign up or log in to Goal Tracker:</p>
-          <p><a href="${Deno.env.get('SUPABASE_URL')}/auth/v1/authorize?provider=google">Join Goal Tracker</a></p>
+          <p><a href="${req.headers.get('origin')}">Join Goal Tracker</a></p>
           <p>Once you're signed up, you'll be able to see this goal in your dashboard.</p>
         `,
       }),
