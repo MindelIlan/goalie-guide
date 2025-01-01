@@ -22,18 +22,18 @@ export const AIChat = ({ messages, setMessages, userGoals, isLoading, setIsLoadi
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage = { role: 'user' as const, content: input };
+    const userMessage: Message = { role: 'user', content: input };
     setMessages([...messages, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
       const response = await generateAIResponse([...messages, userMessage], userGoals);
-      const assistantMessage = {
-        role: 'assistant' as const,
+      const assistantMessage: Message = {
+        role: 'assistant',
         content: response
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prevMessages: Message[]) => [...prevMessages, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
     } finally {
