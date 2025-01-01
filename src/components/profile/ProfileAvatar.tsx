@@ -25,17 +25,6 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarUpdate }: ProfileAvat
     });
 
     try {
-      // Check if we can access the bucket
-      const { data: bucketExists, error: bucketError } = await supabase
-        .storage
-        .from('profile_images')
-        .list();
-
-      if (bucketError) {
-        console.error("Bucket error:", bucketError);
-        throw new Error("Storage is not properly configured. Please ensure the 'profile_images' bucket exists and is accessible.");
-      }
-
       const fileExt = file.name.split(".").pop();
       const filePath = `${userId}-${Math.random()}.${fileExt}`;
 
