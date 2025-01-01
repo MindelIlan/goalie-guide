@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { Profile } from "@/components/Profile";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { LogOut, Plus } from "lucide-react";
 import { GoalsList } from "@/components/GoalsList";
 import { AIAssistant } from "@/components/AIAssistant";
+import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
+import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
 
 interface Goal {
   id: number;
@@ -108,48 +110,53 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
-      <div className="container max-w-4xl px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <img
-              src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=64&h=64&fit=crop"
-              alt="Goal Tracker Logo"
-              className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
-            />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">My 2025 Goals</h1>
-              <p className="text-gray-600 mt-1">{user.email}</p>
+    <NotificationsProvider>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
+        <div className="container max-w-4xl px-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <img
+                src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=64&h=64&fit=crop"
+                alt="Goal Tracker Logo"
+                className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
+              />
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">My 2025 Goals</h1>
+                <p className="text-gray-600 mt-1">{user.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationsPopover />
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut} 
+                className="gap-2 hover:bg-gray-100"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleSignOut} 
-            className="gap-2 hover:bg-gray-100"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+
+          <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 animate-fade-in">
+            <Profile userId={user.id} />
+          </div>
+
+          <div className="mb-8 text-center">
+            <AddGoalDialog onAddGoal={handleAddGoal}>
+              <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
+                <Plus className="h-5 w-5" />
+                Add New Goal
+              </Button>
+            </AddGoalDialog>
+          </div>
+          
+          <GoalsList goals={goals} setGoals={setGoals} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 animate-fade-in">
-          <Profile userId={user.id} />
-        </div>
-
-        <div className="mb-8 text-center">
-          <AddGoalDialog onAddGoal={handleAddGoal}>
-            <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
-              <Plus className="h-5 w-5" />
-              Add New Goal
-            </Button>
-          </AddGoalDialog>
-        </div>
-        
-        <GoalsList goals={goals} setGoals={setGoals} />
+        <AIAssistant />
       </div>
-
-      <AIAssistant />
-    </div>
+    </NotificationsProvider>
   );
 };
 
