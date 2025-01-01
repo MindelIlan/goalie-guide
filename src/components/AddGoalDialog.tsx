@@ -10,19 +10,19 @@ interface AddGoalDialogProps {
   onAddGoal: (goal: {
     title: string;
     description: string;
-    targetDate: string;
+    target_date: string;  // Changed from targetDate to target_date
   }) => void;
 }
 
 export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetDate, setTargetDate] = useState("");
+  const [target_date, setTargetDate] = useState("");  // Changed variable name to match
   const [open, setOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddGoal({ title, description, targetDate });
+    onAddGoal({ title, description, target_date });  // Changed from targetDate to target_date
     setTitle("");
     setDescription("");
     setTargetDate("");
@@ -63,11 +63,11 @@ export const AddGoalDialog = ({ onAddGoal }: AddGoalDialogProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="targetDate">Target Date</Label>
+            <Label htmlFor="target_date">Target Date</Label>
             <Input
-              id="targetDate"
+              id="target_date"
               type="date"
-              value={targetDate}
+              value={target_date}
               onChange={(e) => setTargetDate(e.target.value)}
               required
             />

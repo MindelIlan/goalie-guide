@@ -10,7 +10,7 @@ interface GoalCardProps {
     title: string;
     description: string;
     progress: number;
-    targetDate: string;
+    target_date: string;  // Changed from targetDate to target_date
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
@@ -49,7 +49,7 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
       </div>
       
       <div className="mt-4 text-sm text-gray-500">
-        Target Date: {new Date(goal.targetDate).toLocaleDateString()}
+        Target Date: {new Date(goal.target_date).toLocaleDateString()}
       </div>
     </Card>
   );

@@ -12,7 +12,7 @@ interface Goal {
   title: string;
   description: string;
   progress: number;
-  targetDate: string;
+  target_date: string;  // Changed from targetDate to target_date
   user_id: string;
 }
 
@@ -64,7 +64,9 @@ const Index = () => {
     if (!user) return;
 
     const goal = {
-      ...newGoal,
+      title: newGoal.title,
+      description: newGoal.description,
+      target_date: newGoal.target_date,  // Changed from targetDate to target_date
       progress: 0,
       user_id: user.id,
     };
