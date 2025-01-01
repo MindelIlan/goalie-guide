@@ -24,15 +24,20 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
     try {
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw new Error('Authentication error');
-      if (!user) throw new Error('Not authenticated');
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw new Error('Authentication error');
+      }
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
 
       // Prevent sharing with yourself
       if (user.email === email) {
         throw new Error("You cannot share a goal with yourself");
       }
 
-      // Find or create profile
+      // Find profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
@@ -56,8 +61,14 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .eq('shared_with', profileData.id)
         .maybeSingle();
 
-      if (existingError) throw new Error('Failed to check existing shares');
-      if (existingShare) throw new Error('Goal already shared with this user');
+      if (existingError) {
+        console.error('Existing share check error:', existingError);
+        throw new Error('Failed to check existing shares');
+      }
+      
+      if (existingShare) {
+        throw new Error('Goal already shared with this user');
+      }
 
       // Share the goal
       const { error: shareError } = await supabase
@@ -68,7 +79,10 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
           shared_by: user.id
         }]);
 
-      if (shareError) throw new Error('Failed to share goal');
+      if (shareError) {
+        console.error('Share error:', shareError);
+        throw new Error('Failed to share goal');
+      }
 
       // Create notification
       const { error: notificationError } = await supabase
@@ -81,7 +95,8 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         }]);
 
       if (notificationError) {
-        console.error('Failed to create notification:', notificationError);
+        console.error('Notification error:', notificationError);
+        // Don't throw here as the share was successful
       }
 
       setEmail("");
