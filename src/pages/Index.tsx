@@ -5,11 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { GoalsList } from "@/components/GoalsList";
 import { AIAssistant } from "@/components/AIAssistant";
 import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
-import { NotificationsPopover } from "@/components/notifications/NotificationsPopover";
+import { Header } from "@/components/header/Header";
+import { User } from "@supabase/supabase-js";
 
 interface Goal {
   id: number;
@@ -24,7 +25,7 @@ interface Goal {
 
 const Index = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -97,54 +98,6 @@ const Index = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      // First clear local state
-      setUser(null);
-      setGoals([]);
-      
-      // Clear all session data from localStorage
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('supabase.auth.')) {
-          localStorage.removeItem(key);
-        }
-      });
-
-      // Attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Sign out error:", error);
-        // Even with an error, we've cleared local state
-        toast({
-          title: "Signed out",
-          description: "You have been signed out locally",
-        });
-        return;
-      }
-
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully",
-      });
-    } catch (error) {
-      console.error("Sign out error:", error);
-      // Ensure user is signed out locally even if there's an error
-      toast({
-        title: "Signed out",
-        description: "You have been signed out locally",
-      });
-    }
-  };
-
-  const handleShare = () => {
-    window.open('https://github.com/new', '_blank');
-    toast({
-      title: "Share Project",
-      description: "Create a new repository and import your project to share it!",
-    });
-  };
-
   if (!user) {
     return <Auth />;
   }
@@ -153,30 +106,7 @@ const Index = () => {
     <NotificationsProvider>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
         <div className="container max-w-4xl px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div className="flex items-center gap-4">
-              <img
-                src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=64&h=64&fit=crop"
-                alt="Goal Tracker Logo"
-                className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
-              />
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">My 2025 Goals</h1>
-                <p className="text-gray-600 mt-1">{user.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationsPopover />
-              <Button 
-                variant="destructive"
-                onClick={handleSignOut} 
-                className="gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
+          <Header user={user} />
 
           <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 animate-fade-in">
             <Profile userId={user.id} />
