@@ -4,44 +4,38 @@ import { toast } from "@/components/ui/use-toast";
 
 export const getOpenAIClient = async () => {
   try {
-    const { data, error } = await supabase
-      .from('secrets')
-      .select('secret')
-      .eq('name', 'OPENAI_API_KEY')
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching OpenAI API key:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch OpenAI API key. Please try again later.",
-        variant: "destructive",
-      });
-      throw new Error("Failed to fetch OpenAI API key");
+    // First try to get the API key from the user's profile
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error("User not authenticated");
     }
 
-    if (!data?.secret) {
-      toast({
-        title: "API Key Missing",
-        description: "OpenAI API key not found. Please add it in the Supabase settings.",
-        variant: "destructive",
-      });
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('openai_api_key')
+      .eq('id', session.user.id)
+      .single();
+
+    let apiKey = profile?.openai_api_key;
+
+    // If no key in profile, try to get from Supabase secrets
+    if (!apiKey) {
+      const { data: secretData } = await supabase
+        .from('secrets')
+        .select('secret')
+        .eq('name', 'OPENAI_API_KEY')
+        .single();
+      
+      apiKey = secretData?.secret;
+    }
+
+    if (!apiKey) {
       throw new Error("OpenAI API key not found");
     }
 
-    // Verify that the key starts with "sk-" as all OpenAI API keys do
-    if (!data.secret.startsWith('sk-')) {
-      toast({
-        title: "Invalid API Key",
-        description: "The OpenAI API key appears to be invalid. It should start with 'sk-'.",
-        variant: "destructive",
-      });
-      throw new Error("Invalid OpenAI API key format");
-    }
-
     return new OpenAI({
-      apiKey: data.secret,
-      dangerouslyAllowBrowser: true
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true // Required for client-side usage
     });
   } catch (error) {
     console.error('OpenAI client error:', error);

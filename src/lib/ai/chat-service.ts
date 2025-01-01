@@ -20,11 +20,12 @@ export const testOpenAIConnection = async () => {
       description: response || "No response received",
     });
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('OpenAI connection test error:', error);
+    const errorMessage = error.message || "Failed to connect to OpenAI";
     toast({
       title: "Error",
-      description: "Failed to connect to OpenAI. Please check your API key.",
+      description: `Failed to connect to OpenAI: ${errorMessage}`,
       variant: "destructive",
     });
     throw error;
@@ -64,15 +65,18 @@ Always maintain a supportive, encouraging tone while being direct and practical 
         { role: 'system', content: systemMessage },
         ...messages.map(m => ({ role: m.role, content: m.content })),
       ],
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 1000,
     });
 
     return completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating AI response:', error);
+    const errorMessage = error.message || "Failed to get response from AI";
     toast({
       title: "Error",
-      description: "Failed to get response from AI assistant. Please try again.",
+      description: `Failed to get response from AI assistant: ${errorMessage}`,
       variant: "destructive",
     });
     throw error;
