@@ -37,7 +37,8 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           title,
           description,
           progress,
-          profile:profiles!inner(
+          user_id,
+          profile:profiles!user_id(
             id,
             avatar_url,
             description
