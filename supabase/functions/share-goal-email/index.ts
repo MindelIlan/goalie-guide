@@ -18,24 +18,28 @@ interface EmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  try {
-    // Handle CORS preflight requests
-    if (req.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
-    }
+  console.log("Received request to share-goal-email function");
 
-    // Validate request method
-    if (req.method !== "POST") {
-      throw new Error(`HTTP method ${req.method} is not allowed`);
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    if (!RESEND_API_KEY) {
+      throw new Error("Missing RESEND_API_KEY");
     }
 
     // Parse request body
     const emailRequest: EmailRequest = await req.json();
     const { goalId, goalTitle, recipientEmail, senderEmail } = emailRequest;
 
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
-    }
+    console.log("Processing email request:", {
+      goalId,
+      goalTitle,
+      recipientEmail,
+      senderEmail,
+    });
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -66,6 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       const error = await res.text();
+      console.error("Error from Resend API:", error);
       throw new Error(`Failed to send email: ${error}`);
     }
 
