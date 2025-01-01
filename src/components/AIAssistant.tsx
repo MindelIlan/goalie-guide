@@ -76,19 +76,19 @@ export const AIAssistant = () => {
       <Button
         variant="outline"
         size="icon"
-        className="fixed bottom-4 right-4 rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-300"
+        className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:bg-gray-50"
         onClick={() => setIsExpanded(true)}
       >
-        <Bot className="h-6 w-6" />
+        <Bot className="h-6 w-6 text-primary" />
       </Button>
     );
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 w-[400px] h-[600px] p-4 shadow-lg flex flex-col animate-fade-in">
+    <Card className="fixed bottom-6 right-6 w-[400px] h-[600px] p-4 shadow-xl flex flex-col animate-fade-in bg-white">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
+          <Bot className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">AI Assistant</h3>
         </div>
         <Button
