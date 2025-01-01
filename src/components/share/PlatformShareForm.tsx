@@ -32,22 +32,56 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         throw new Error("You cannot share a goal with yourself");
       }
 
-      // Find user profile by email
+      // First check if the user exists in auth system
+      const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserByEmail(email);
+      
+      if (authUserError) {
+        console.error('Auth lookup error:', authUserError);
+        throw new Error('Failed to verify user email');
+      }
+
+      if (!authUser) {
+        throw new Error('This email is not registered in the system');
+      }
+
+      // Find or create profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
         .eq('email', email)
         .maybeSingle();
 
-      if (profileError) throw new Error('Failed to find user');
-      if (!profileData) throw new Error('User not found. Please check the email address.');
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        throw new Error('Failed to find user profile');
+      }
+
+      if (!profileData) {
+        // Try to create profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{ id: authUser.id, email: email }])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Profile creation error:', createError);
+          throw new Error('Failed to create user profile');
+        }
+
+        if (!newProfile) {
+          throw new Error('Failed to setup user profile');
+        }
+      }
+
+      const targetProfileId = profileData?.id || authUser.id;
 
       // Check for existing share
       const { data: existingShare, error: existingError } = await supabase
         .from('shared_goals')
         .select('id')
         .eq('goal_id', goalId)
-        .eq('shared_with', profileData.id)
+        .eq('shared_with', targetProfileId)
         .maybeSingle();
 
       if (existingError) throw new Error('Failed to check existing shares');
@@ -58,7 +92,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
         .from('shared_goals')
         .insert([{
           goal_id: goalId,
-          shared_with: profileData.id,
+          shared_with: targetProfileId,
           shared_by: user.id
         }]);
 
@@ -68,7 +102,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert([{
-          user_id: profileData.id,
+          user_id: targetProfileId,
           type: 'goal_shared',
           title: 'New Goal Shared With You',
           message: `${user.email} shared their goal "${goalTitle}" with you`
@@ -84,6 +118,7 @@ export const PlatformShareForm = ({ goalId, goalTitle, onSuccess }: PlatformShar
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
+      console.error('Share error:', err);
     } finally {
       setIsLoading(false);
     }
