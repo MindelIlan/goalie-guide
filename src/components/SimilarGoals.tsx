@@ -16,6 +16,18 @@ interface SimilarGoal {
   };
 }
 
+interface GoalWithProfile {
+  id: number;
+  title: string;
+  description: string;
+  progress: number;
+  profiles: {
+    id: string;
+    avatar_url: string | null;
+    description: string | null;
+  };
+}
+
 export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
   const [similarGoals, setSimilarGoals] = useState<SimilarGoal[]>([]);
 
@@ -31,7 +43,6 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
         title,
         description,
         progress,
-        user_id,
         profiles!inner (
           id,
           avatar_url,
@@ -44,7 +55,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
     if (error) {
       console.error("Error fetching similar goals:", error);
     } else if (goals) {
-      const formattedGoals = goals.map(goal => ({
+      const formattedGoals = (goals as GoalWithProfile[]).map(goal => ({
         id: goal.id,
         title: goal.title,
         description: goal.description,
