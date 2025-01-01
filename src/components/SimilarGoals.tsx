@@ -15,7 +15,7 @@ interface SimilarGoal {
   title: string;
   description: string;
   progress: number;
-  profiles: Profile;
+  profile: Profile;
 }
 
 export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
@@ -35,7 +35,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           title,
           description,
           progress,
-          profiles:user_id (
+          profile:profiles!inner(
             id,
             avatar_url,
             description
@@ -55,11 +55,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
         // Transform the data to match our expected type
         const formattedGoals = goals.map(goal => ({
           ...goal,
-          profiles: goal.profiles || {
-            id: '',
-            avatar_url: null,
-            description: null
-          }
+          profile: goal.profile
         })) as SimilarGoal[];
         
         setSimilarGoals(formattedGoals);
@@ -79,7 +75,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
           <Card key={goal.id} className="p-4">
             <div className="flex items-start gap-4">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={goal.profiles?.avatar_url || ""} />
+                <AvatarImage src={goal.profile?.avatar_url || ""} />
                 <AvatarFallback>
                   <User className="w-6 h-6" />
                 </AvatarFallback>
@@ -87,7 +83,7 @@ export const SimilarGoals = ({ goalTitle }: { goalTitle: string }) => {
               <div>
                 <h5 className="font-medium">{goal.title}</h5>
                 <p className="text-sm text-gray-600 mt-1">
-                  {goal.profiles?.description || "No description available"}
+                  {goal.profile?.description || "No description available"}
                 </p>
                 <div className="text-sm text-gray-500 mt-2">
                   Progress: {goal.progress}%
