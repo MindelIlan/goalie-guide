@@ -22,9 +22,10 @@ interface GoalCardProps {
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
+  isDuplicate?: boolean;
 }
 
-export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
+export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showSimilar, setShowSimilar] = useState(false);
   const [showSubgoals, setShowSubgoals] = useState(false);
@@ -114,6 +115,8 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
       className={`p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative ${
         isCompleted 
           ? 'bg-gradient-to-r from-teal-50 to-emerald-50 border-emerald-200'
+          : isDuplicate
+          ? 'bg-[#E5DEFF] border-purple-200 hover:border-purple-300'
           : 'bg-white border-gray-200 hover:border-primary/20'
       }`}
       onMouseEnter={() => setIsHovered(true)}

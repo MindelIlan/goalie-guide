@@ -18,9 +18,10 @@ interface Goal {
 interface GoalsListProps {
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
+  duplicateGoals?: Set<number>;
 }
 
-export const GoalsList = ({ goals, setGoals }: GoalsListProps) => {
+export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: GoalsListProps) => {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   const handleDeleteGoal = async (id: number) => {
@@ -90,6 +91,7 @@ export const GoalsList = ({ goals, setGoals }: GoalsListProps) => {
             goal={goal}
             onDelete={handleDeleteGoal}
             onEdit={() => setEditingGoal(goal)}
+            isDuplicate={duplicateGoals.has(goal.id)}
           />
         </motion.div>
       ))}
