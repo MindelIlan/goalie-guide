@@ -26,35 +26,41 @@ export const FoldersList = ({
 }: FoldersListProps) => {
   const [newFolderName, setNewFolderName] = useState("");
   const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleAddFolder = async () => {
     if (!newFolderName.trim()) return;
 
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('goal_folders')
-        .insert([{ name: newFolderName }])
+        .insert([{ name: newFolderName.trim() }])
         .select()
         .single();
 
       if (error) throw error;
 
-      onFoldersChange([...folders, data]);
-      setNewFolderName("");
-      setIsAddingFolder(false);
-      
-      toast({
-        title: "Success",
-        description: "Folder created successfully",
-      });
+      if (data) {
+        onFoldersChange([...folders, data]);
+        setNewFolderName("");
+        setIsAddingFolder(false);
+        
+        toast({
+          title: "Success",
+          description: "Folder created successfully",
+        });
+      }
     } catch (error) {
       console.error('Error adding folder:', error);
       toast({
         title: "Error",
-        description: "Failed to create folder",
+        description: "Failed to create folder. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,18 +86,27 @@ export const FoldersList = ({
             placeholder="Enter folder name"
             className="flex-1"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !isLoading) {
                 handleAddFolder();
               }
             }}
+            disabled={isLoading}
           />
-          <Button onClick={handleAddFolder} size="icon">
+          <Button 
+            onClick={handleAddFolder} 
+            size="icon"
+            disabled={isLoading}
+          >
             <Plus className="h-4 w-4" />
           </Button>
           <Button 
-            onClick={() => setIsAddingFolder(false)} 
+            onClick={() => {
+              setIsAddingFolder(false);
+              setNewFolderName("");
+            }} 
             variant="ghost" 
             size="icon"
+            disabled={isLoading}
           >
             <X className="h-4 w-4" />
           </Button>
