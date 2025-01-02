@@ -13,6 +13,7 @@ interface Goal {
   target_date: string;
   tags: string[];
   created_at: string;
+  folder_id?: number | null;
 }
 
 interface GoalsListProps {
@@ -63,6 +64,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
       description: string;
       target_date: string;
       tags: string[];
+      folder_id?: number | null;
     }
   ) => {
     console.log('Attempting to update goal:', id, updatedGoal);
@@ -74,6 +76,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
           description: updatedGoal.description,
           target_date: updatedGoal.target_date,
           tags: updatedGoal.tags || [],
+          folder_id: updatedGoal.folder_id
         })
         .eq("id", id)
         .select()
