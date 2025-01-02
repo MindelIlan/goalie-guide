@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { GoalHeader } from "./goal/GoalHeader";
 import { GoalProgress } from "./goal/GoalProgress";
 import { GoalButtons } from "./goal/GoalButtons";
+import confetti from 'canvas-confetti';
 
 interface GoalCardProps {
   goal: {
@@ -28,6 +29,46 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
   const [showSimilar, setShowSimilar] = useState(false);
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [hasCelebrated, setHasCelebrated] = useState(false);
+
+  useEffect(() => {
+    if (goal.progress === 100 && !hasCelebrated) {
+      celebrateCompletion();
+      setHasCelebrated(true);
+    }
+  }, [goal.progress, hasCelebrated]);
+
+  const celebrateCompletion = () => {
+    const duration = 3 * 1000;
+    const animationEnd = Date.now() + duration;
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      const particleCount = 50;
+
+      confetti({
+        particleCount,
+        startVelocity: 30,
+        spread: 360,
+        origin: {
+          x: randomInRange(0.1, 0.9),
+          y: Math.random() - 0.2
+        },
+        colors: ['#F97316', '#0D9488', '#8B5CF6', '#D946EF', '#1EAEDB'],
+        disableForReducedMotion: true
+      });
+    }, 250);
+  };
 
   const updateGoalProgress = async (progress: number) => {
     const { error } = await supabase
@@ -66,10 +107,15 @@ export const GoalCard = ({ goal, onDelete, onEdit }: GoalCardProps) => {
   };
 
   const timeProgress = calculateTimeProgress();
+  const isCompleted = goal.progress === 100;
 
   return (
     <Card 
-      className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative bg-white border-gray-200 hover:border-primary/20"
+      className={`p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative ${
+        isCompleted 
+          ? 'bg-gradient-to-r from-teal-50 to-emerald-50 border-emerald-200'
+          : 'bg-white border-gray-200 hover:border-primary/20'
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
