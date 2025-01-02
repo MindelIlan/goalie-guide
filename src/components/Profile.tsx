@@ -9,6 +9,7 @@ interface ProfileData {
   avatar_url: string | null;
   description: string | null;
   openai_api_key: string | null;
+  username: string | null;
 }
 
 interface Goal {
@@ -19,7 +20,8 @@ export const Profile = ({ userId }: { userId: string }) => {
   const [profile, setProfile] = useState<ProfileData>({ 
     avatar_url: null, 
     description: null,
-    openai_api_key: null
+    openai_api_key: null,
+    username: null
   });
   const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
@@ -122,6 +124,7 @@ export const Profile = ({ userId }: { userId: string }) => {
           <ProfileDescription
             userId={userId}
             description={profile.description}
+            username={profile.username}
             openai_api_key={profile.openai_api_key}
             onDescriptionUpdate={handleDescriptionUpdate}
           />
