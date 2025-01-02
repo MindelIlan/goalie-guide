@@ -88,6 +88,7 @@ export type Database = {
           email: string | null
           id: string
           openai_api_key: string | null
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -96,6 +97,7 @@ export type Database = {
           email?: string | null
           id: string
           openai_api_key?: string | null
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           email?: string | null
           id?: string
           openai_api_key?: string | null
+          username?: string | null
         }
         Relationships: []
       }
