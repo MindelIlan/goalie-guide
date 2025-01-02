@@ -7,6 +7,10 @@ interface GoalProgressProps {
 }
 
 export const GoalProgress = ({ taskProgress, timeProgress }: GoalProgressProps) => {
+  // Calculate the fraction based on the percentage
+  const total = 100;
+  const completed = Math.round((taskProgress / 100) * total);
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -15,7 +19,7 @@ export const GoalProgress = ({ taskProgress, timeProgress }: GoalProgressProps) 
             <CheckSquare className="h-4 w-4 text-primary" />
             Task Progress
           </span>
-          <span>{taskProgress}%</span>
+          <span>{completed}/{total}</span>
         </div>
         <Progress 
           value={taskProgress} 
