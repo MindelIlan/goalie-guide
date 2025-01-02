@@ -23,13 +23,11 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     let isMounted = true;
     let retryCount = 0;
     const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
 
     const fetchGoals = async () => {
       if (!isMounted) return;
       
-      setIsLoading(true);
-      setError(null);
-
       try {
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session) {
@@ -48,29 +46,29 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         if (error) {
           console.error('Error fetching goals:', error);
           setError(error);
+          
           if (retryCount < maxRetries) {
             retryCount++;
-            setTimeout(fetchGoals, 1000 * retryCount); // Exponential backoff
+            setTimeout(() => {
+              console.log(`Retrying fetch (${retryCount}/${maxRetries})...`);
+              fetchGoals();
+            }, retryDelay * retryCount); // Exponential backoff
           } else {
             toast({
               title: "Error",
-              description: "Failed to fetch goals",
+              description: "Failed to fetch goals after multiple attempts",
               variant: "destructive",
             });
           }
         } else {
           setGoals(data || []);
+          setError(null);
           retryCount = 0;
         }
       } catch (err) {
         if (!isMounted) return;
         console.error('Unexpected error fetching goals:', err);
         setError(err as Error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred while fetching goals",
-          variant: "destructive",
-        });
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -78,6 +76,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
       }
     };
 
+    setIsLoading(true);
     fetchGoals();
 
     // Cleanup function
@@ -86,20 +85,17 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     };
   }, [selectedFolderId]); // Only re-fetch when folder changes
 
-  const filteredGoals = selectedFolderId
-    ? goals.filter(goal => goal.folder_id === selectedFolderId)
-    : goals;
-
-  const searchedGoals = searchQuery.trim()
-    ? filteredGoals.filter(goal => {
-        const query = searchQuery.toLowerCase();
-        return (
-          goal.title.toLowerCase().includes(query) ||
-          goal.description?.toLowerCase().includes(query) ||
-          goal.tags?.some(tag => tag.toLowerCase().includes(query))
-        );
-      })
-    : filteredGoals;
+  // Filter goals based on search query
+  const filteredGoals = goals.filter(goal => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      goal.title.toLowerCase().includes(query) ||
+      goal.description?.toLowerCase().includes(query) ||
+      goal.tags?.some(tag => tag.toLowerCase().includes(query))
+    );
+  });
 
   const stats = {
     totalGoals: goals.length,
@@ -110,7 +106,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   };
 
   return {
-    goals: searchedGoals,
+    goals: filteredGoals,
     setGoals,
     isLoading,
     error,
