@@ -11,11 +11,22 @@ export const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const isPasswordValid = (password: string) => {
+    // Password must be at least 6 characters long and contain at least one number
+    const minLength = password.length >= 6;
+    const hasNumber = /\d/.test(password);
+    return minLength && hasNumber;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (!email || !password) {
-        throw new Error("Please enter both email and password");
+        throw new Error("נא להזין אימייל וסיסמה");
+      }
+
+      if (!isPasswordValid(password)) {
+        throw new Error("הסיסמה חייבת להכיל לפחות 6 תווים ומספר אחד");
       }
       
       setLoading(true);
@@ -30,23 +41,22 @@ export const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Check your email for the confirmation link!",
+        title: "הצלחה",
+        description: "בדוק את האימייל שלך לקישור האימות!",
       });
     } catch (error) {
-      let message = "An error occurred during sign up";
+      let message = "אירעה שגיאה במהלך ההרשמה";
       if (error instanceof Error) {
-        // Handle specific error messages
         if (error.message.includes("invalid_credentials")) {
-          message = "Invalid email or password format";
+          message = "אימייל או סיסמה לא תקינים";
         } else if (error.message.includes("email")) {
-          message = "Please enter a valid email address";
+          message = "נא להזין כתובת אימייל תקינה";
         } else {
           message = error.message;
         }
       }
       toast({
-        title: "Error",
+        title: "שגיאה",
         description: message,
         variant: "destructive",
       });
@@ -59,7 +69,7 @@ export const Auth = () => {
     e.preventDefault();
     try {
       if (!email || !password) {
-        throw new Error("Please enter both email and password");
+        throw new Error("נא להזין אימייל וסיסמה");
       }
 
       setLoading(true);
@@ -70,17 +80,17 @@ export const Auth = () => {
       
       if (error) {
         if (error.message.includes("invalid_credentials")) {
-          throw new Error("Invalid email or password");
+          throw new Error("אימייל או סיסמה שגויים");
         }
         throw error;
       }
     } catch (error) {
-      let message = "An error occurred during sign in";
+      let message = "אירעה שגיאה במהלך ההתחברות";
       if (error instanceof Error) {
         message = error.message;
       }
       toast({
-        title: "Error",
+        title: "שגיאה",
         description: message,
         variant: "destructive",
       });
@@ -106,8 +116,8 @@ export const Auth = () => {
       if (error) throw error;
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during Google sign in",
+        title: "שגיאה",
+        description: error instanceof Error ? error.message : "אירעה שגיאה במהלך ההתחברות עם Google",
         variant: "destructive",
       });
     } finally {
@@ -115,28 +125,35 @@ export const Auth = () => {
     }
   };
 
+  const isSignUpDisabled = loading || !email || !password || !isPasswordValid(password);
+
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Welcome to Goal Tracker</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">ברוכים הבאים למעקב מטרות</h2>
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         <div>
           <Input
             type="email"
-            placeholder="Email"
+            placeholder="אימייל"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            dir="rtl"
           />
         </div>
         <div>
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="סיסמה"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
+            dir="rtl"
           />
+          <p className="text-sm text-gray-500 mt-1 text-right">
+            הסיסמה חייבת להכיל לפחות 6 תווים ומספר אחד
+          </p>
         </div>
         <div className="flex gap-4">
           <Button
@@ -145,16 +162,16 @@ export const Auth = () => {
             className="flex-1"
             type="submit"
           >
-            Sign In
+            התחברות
           </Button>
           <Button
             onClick={handleSignUp}
-            disabled={loading}
+            disabled={isSignUpDisabled}
             variant="outline"
             className="flex-1"
             type="button"
           >
-            Sign Up
+            הרשמה
           </Button>
         </div>
         <div className="relative">
@@ -163,7 +180,7 @@ export const Auth = () => {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-2 text-muted-foreground">
-              Or continue with
+              או המשך עם
             </span>
           </div>
         </div>
