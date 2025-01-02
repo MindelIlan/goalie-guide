@@ -13,8 +13,15 @@ interface HeaderProps {
 export const Header = ({ user }: HeaderProps) => {
   const { handleSignOut } = useAuthActions();
   const [username, setUsername] = useState<string | null>(null);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
+    const hasAnimated = localStorage.getItem(`header-animated-${user.id}`);
+    if (!hasAnimated) {
+      setShouldAnimate(true);
+      localStorage.setItem(`header-animated-${user.id}`, 'true');
+    }
+
     const fetchProfile = async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -36,7 +43,7 @@ export const Header = ({ user }: HeaderProps) => {
         <img
           src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=64&h=64&fit=crop"
           alt="Goal Tracker Logo"
-          className="w-16 h-16 rounded-full shadow-lg animate-fade-in"
+          className={`w-16 h-16 rounded-full shadow-lg ${shouldAnimate ? 'animate-fade-in' : ''}`}
         />
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">My 2025 Goals</h1>
