@@ -4,6 +4,12 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
+interface Folder {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
 interface GoalsHeaderProps {
   onAddGoal: (goal: {
     title: string;
@@ -14,11 +20,7 @@ interface GoalsHeaderProps {
   }) => Promise<number | undefined>;
   onCheckDuplicates: () => void;
   onSearch: (query: string) => void;
-  folders: Array<{
-    id: number;
-    name: string;
-    description?: string | null;
-  }>;
+  folders: Folder[];
 }
 
 export const GoalsHeader = ({ 
