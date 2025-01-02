@@ -25,12 +25,14 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   const handleDeleteGoal = async (id: number) => {
+    console.log('Attempting to delete goal:', id);
     const { error } = await supabase.from("goals").delete().eq("id", id);
 
     if (error) {
+      console.error('Error deleting goal:', error);
       toast({
         title: "Error",
-        description: "Failed to delete goal",
+        description: "Failed to delete goal: " + error.message,
         variant: "destructive",
       });
     } else {
@@ -51,6 +53,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
       tags: string[];
     }
   ) => {
+    console.log('Attempting to update goal:', id, updatedGoal);
     const { data, error } = await supabase
       .from("goals")
       .update({
@@ -64,9 +67,10 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
       .single();
 
     if (error) {
+      console.error('Error updating goal:', error);
       toast({
         title: "Error",
-        description: "Failed to update goal",
+        description: "Failed to update goal: " + error.message,
         variant: "destructive",
       });
     } else {
