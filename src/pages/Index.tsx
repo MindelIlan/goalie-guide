@@ -11,6 +11,16 @@ import { AIAssistant } from "@/components/AIAssistant";
 import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
 import { Header } from "@/components/header/Header";
 import { User } from "@supabase/supabase-js";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Goal {
   id: number;
@@ -27,6 +37,8 @@ const Index = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const [showDuplicatesDialog, setShowDuplicatesDialog] = useState(false);
+  const [duplicateGoals, setDuplicateGoals] = useState<Goal[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -62,6 +74,53 @@ const Index = () => {
       });
     } else {
       setGoals(data || []);
+      checkForDuplicates(data || []);
+    }
+  };
+
+  const checkForDuplicates = (goalsList: Goal[]) => {
+    const duplicates: Goal[] = [];
+    const seen = new Map<string, Goal>();
+
+    goalsList.forEach(goal => {
+      // Create a key based on title and description (case-insensitive)
+      const key = `${goal.title.toLowerCase()}-${goal.description?.toLowerCase() || ''}`;
+      
+      if (seen.has(key)) {
+        // If we've seen this combination before, it's a duplicate
+        if (!duplicates.includes(seen.get(key)!)) {
+          duplicates.push(seen.get(key)!);
+        }
+        duplicates.push(goal);
+      } else {
+        seen.set(key, goal);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      setDuplicateGoals(duplicates);
+      setShowDuplicatesDialog(true);
+    }
+  };
+
+  const handleDeleteDuplicate = async (goalId: number) => {
+    const { error } = await supabase
+      .from('goals')
+      .delete()
+      .eq('id', goalId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete duplicate goal",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Duplicate goal deleted successfully",
+      });
+      fetchGoals(user!.id);
     }
   };
 
@@ -142,6 +201,13 @@ const Index = () => {
           </div>
 
           <div className="mb-8 text-center">
+            <Button 
+              onClick={() => checkForDuplicates(goals)}
+              variant="outline"
+              className="mr-4"
+            >
+              Check for Duplicates
+            </Button>
             <AddGoalDialog onAddGoal={handleAddGoal}>
               <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
                 <Plus className="h-5 w-5" />
@@ -154,6 +220,34 @@ const Index = () => {
         </div>
 
         <AIAssistant />
+
+        <AlertDialog open={showDuplicatesDialog} onOpenChange={setShowDuplicatesDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate Goals Found</AlertDialogTitle>
+              <AlertDialogDescription>
+                The following goals appear to be duplicates:
+                {duplicateGoals.map((goal, index) => (
+                  <div key={goal.id} className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p className="font-medium">{goal.title}</p>
+                    <p className="text-sm text-gray-600">{goal.description}</p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteDuplicate(goal.id)}
+                      className="mt-2"
+                    >
+                      Delete this duplicate
+                    </Button>
+                  </div>
+                ))}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowDuplicatesDialog(false)}>Keep All</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </NotificationsProvider>
   );
