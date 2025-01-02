@@ -55,6 +55,7 @@ export type Database = {
           created_at: string
           id: number
           message: string | null
+          metadata: Json | null
           read: boolean | null
           title: string
           type: string
@@ -64,6 +65,7 @@ export type Database = {
           created_at?: string
           id?: number
           message?: string | null
+          metadata?: Json | null
           read?: boolean | null
           title: string
           type: string
@@ -73,6 +75,7 @@ export type Database = {
           created_at?: string
           id?: number
           message?: string | null
+          metadata?: Json | null
           read?: boolean | null
           title?: string
           type?: string
