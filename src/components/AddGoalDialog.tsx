@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { TagInput } from "./TagInput";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddGoalDialogProps {
   onAddGoal: (goal: {
@@ -14,7 +16,7 @@ interface AddGoalDialogProps {
     target_date: string;
     tags: string[];
   }) => void;
-  children?: React.ReactNode; // Add children prop
+  children?: React.ReactNode;
 }
 
 export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
@@ -22,15 +24,72 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
   const [description, setDescription] = useState("");
   const [target_date, setTargetDate] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [subgoals, setSubgoals] = useState<string[]>([]);
+  const [newSubgoal, setNewSubgoal] = useState("");
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAddSubgoal = () => {
+    if (newSubgoal.trim()) {
+      setSubgoals([...subgoals, newSubgoal.trim()]);
+      setNewSubgoal("");
+    }
+  };
+
+  const handleRemoveSubgoal = (index: number) => {
+    setSubgoals(subgoals.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // First create the main goal
     onAddGoal({ title, description, target_date, tags });
+    
+    // If there are subgoals, create them
+    if (subgoals.length > 0) {
+      // Get the newly created goal's ID
+      const { data: goalData } = await supabase
+        .from("goals")
+        .select("id")
+        .eq("title", title)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (goalData) {
+        // Create all subgoals
+        const { error: subgoalsError } = await supabase
+          .from("subgoals")
+          .insert(
+            subgoals.map(title => ({
+              goal_id: goalData.id,
+              title,
+              completed: false
+            }))
+          );
+
+        if (subgoalsError) {
+          toast({
+            title: "Error",
+            description: "Failed to create subgoals",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Goal and subgoals created successfully!",
+          });
+        }
+      }
+    }
+
+    // Reset form
     setTitle("");
     setDescription("");
     setTargetDate("");
     setTags([]);
+    setSubgoals([]);
     setOpen(false);
   };
 
@@ -83,6 +142,52 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
             <Label>Tags</Label>
             <TagInput tags={tags} setTags={setTags} />
           </div>
+          
+          {/* Subgoals Section */}
+          <div className="space-y-2">
+            <Label>Subgoals (Optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={newSubgoal}
+                onChange={(e) => setNewSubgoal(e.target.value)}
+                placeholder="Add a subgoal"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSubgoal();
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                variant="secondary"
+                onClick={handleAddSubgoal}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {subgoals.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {subgoals.map((subgoal, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-2 bg-secondary/20 rounded-md"
+                  >
+                    <span>{subgoal}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveSubgoal(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Button type="submit" className="w-full">Add Goal</Button>
         </form>
       </DialogContent>
