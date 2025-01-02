@@ -3,6 +3,7 @@ import { GoalsList } from "@/components/GoalsList";
 import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
 import { FoldersList } from "./FoldersList";
+import { GoalsStats } from "./GoalsStats";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -66,51 +67,15 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
     }
   };
 
+  const totalGoals = goals.length;
+  const completedGoals = goals.filter(goal => goal.progress === 100).length;
+  const averageProgress = totalGoals > 0
+    ? Math.round(goals.reduce((sum, goal) => sum + (goal.progress || 0), 0) / totalGoals)
+    : 0;
+
   const filteredGoals = selectedFolderId
     ? goals.filter(goal => goal.folder_id === selectedFolderId)
     : goals;
-
-  const checkForDuplicates = (goalsList: Goal[] = goals) => {
-    console.log('Checking for duplicates among', goalsList.length, 'goals');
-    const duplicates: Goal[] = [];
-    const duplicateIds = new Set<number>();
-    const seen = new Map<string, Goal>();
-
-    goalsList.forEach(goal => {
-      const key = `${goal.title.toLowerCase()}-${goal.description?.toLowerCase() || ''}`;
-      console.log('Checking goal:', goal.title, 'with key:', key);
-      
-      if (seen.has(key)) {
-        if (!duplicates.includes(seen.get(key)!)) {
-          duplicates.push(seen.get(key)!);
-          duplicateIds.add(seen.get(key)!.id);
-        }
-        duplicates.push(goal);
-        duplicateIds.add(goal.id);
-      } else {
-        seen.set(key, goal);
-      }
-    });
-
-    console.log('Found duplicate goals:', duplicates.length);
-    console.log('Duplicate IDs:', Array.from(duplicateIds));
-
-    setDuplicateGoals(duplicates);
-    setDuplicateGoalIds(duplicateIds);
-    
-    if (duplicates.length > 0) {
-      setShowDuplicatesDialog(true);
-      toast({
-        title: "Duplicates Found",
-        description: `Found ${duplicates.length} duplicate goals. Please review them in the dialog.`,
-      });
-    } else {
-      toast({
-        title: "No Duplicates",
-        description: "No duplicate goals were found.",
-      });
-    }
-  };
 
   return (
     <>
@@ -118,11 +83,18 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         <Profile userId={userId} />
       </div>
 
+      <GoalsStats
+        totalGoals={totalGoals}
+        completedGoals={completedGoals}
+        averageProgress={averageProgress}
+      />
+
       <FoldersList
         folders={folders}
         onFoldersChange={setFolders}
         selectedFolderId={selectedFolderId}
         onSelectFolder={setSelectedFolderId}
+        goals={goals}
       />
 
       <GoalsHeader 
