@@ -44,6 +44,9 @@ export const AddGoalForm = ({
   onFolderChange,
   onSubmit,
 }: AddGoalFormProps) => {
+  // Get today's date in YYYY-MM-DD format for the min attribute
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -89,6 +92,7 @@ export const AddGoalForm = ({
           type="date"
           value={target_date}
           onChange={(e) => onTargetDateChange(e.target.value)}
+          min={today}
           required
         />
       </div>

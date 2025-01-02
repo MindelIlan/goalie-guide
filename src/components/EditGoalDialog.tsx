@@ -43,6 +43,9 @@ export const EditGoalDialog = ({ goal, open, onOpenChange, onEditGoal }: EditGoa
   const [folders, setFolders] = useState<Folder[]>([]);
   const { toast } = useToast();
 
+  // Get today's date in YYYY-MM-DD format for the min attribute
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     setTitle(goal.title);
     setDescription(goal.description);
@@ -141,6 +144,7 @@ export const EditGoalDialog = ({ goal, open, onOpenChange, onEditGoal }: EditGoa
               type="date"
               value={target_date}
               onChange={(e) => setTargetDate(e.target.value)}
+              min={today}
               required
             />
           </div>
