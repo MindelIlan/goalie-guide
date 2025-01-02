@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Plus, Folder, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,35 +18,38 @@ interface FoldersListProps {
   onSelectFolder: (folderId: number | null) => void;
 }
 
-export const FoldersList = ({ folders, onFoldersChange, selectedFolderId, onSelectFolder }: FoldersListProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+export const FoldersList = ({ 
+  folders, 
+  onFoldersChange, 
+  selectedFolderId, 
+  onSelectFolder 
+}: FoldersListProps) => {
+  const [newFolderName, setNewFolderName] = useState("");
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
   const { toast } = useToast();
 
-  const handleCreateFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleAddFolder = async () => {
+    if (!newFolderName.trim()) return;
+
     try {
       const { data, error } = await supabase
         .from('goal_folders')
-        .insert([{ name, description }])
+        .insert([{ name: newFolderName }])
         .select()
         .single();
 
       if (error) throw error;
 
       onFoldersChange([...folders, data]);
-      setIsOpen(false);
-      setName("");
-      setDescription("");
+      setNewFolderName("");
+      setIsAddingFolder(false);
       
       toast({
         title: "Success",
         description: "Folder created successfully",
       });
     } catch (error) {
-      console.error('Error creating folder:', error);
+      console.error('Error adding folder:', error);
       toast({
         title: "Error",
         description: "Failed to create folder",
@@ -61,58 +61,63 @@ export const FoldersList = ({ folders, onFoldersChange, selectedFolderId, onSele
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
-          <Button
-            variant={selectedFolderId === null ? "secondary" : "outline"}
-            onClick={() => onSelectFolder(null)}
-          >
-            All Goals
+        <h2 className="text-lg font-semibold">Folders</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsAddingFolder(!isAddingFolder)}
+        >
+          <Plus className="h-4 w-4" />
+          Add Folder
+        </Button>
+      </div>
+
+      {isAddingFolder && (
+        <div className="flex gap-2 mb-4">
+          <Input
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            placeholder="Enter folder name"
+            className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleAddFolder();
+              }
+            }}
+          />
+          <Button onClick={handleAddFolder} size="icon">
+            <Plus className="h-4 w-4" />
           </Button>
-          {folders.map((folder) => (
-            <Button
-              key={folder.id}
-              variant={selectedFolderId === folder.id ? "secondary" : "outline"}
-              onClick={() => onSelectFolder(folder.id)}
-            >
-              {folder.name}
-            </Button>
-          ))}
+          <Button 
+            onClick={() => setIsAddingFolder(false)} 
+            variant="ghost" 
+            size="icon"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Folder
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Folder</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateFolder} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Folder Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter folder name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe this folder"
-                />
-              </div>
-              <Button type="submit" className="w-full">Create Folder</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+      )}
+
+      <div className="space-y-2">
+        <Button
+          variant={selectedFolderId === null ? "secondary" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => onSelectFolder(null)}
+        >
+          <Folder className="h-4 w-4 mr-2" />
+          All Goals
+        </Button>
+        {folders.map((folder) => (
+          <Button
+            key={folder.id}
+            variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onSelectFolder(folder.id)}
+          >
+            <Folder className="h-4 w-4 mr-2" />
+            {folder.name}
+          </Button>
+        ))}
       </div>
     </div>
   );
