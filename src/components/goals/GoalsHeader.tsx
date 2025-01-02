@@ -3,6 +3,7 @@ import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce"; // We'll create this hook
 
 interface Folder {
   id: number;
@@ -30,6 +31,17 @@ export const GoalsHeader = ({
   folders 
 }: GoalsHeaderProps) => {
   const [showAddGoal, setShowAddGoal] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  // Update search when debounced value changes
+  useState(() => {
+    onSearch(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
 
   return (
     <div className="mb-8 space-y-4">
@@ -39,7 +51,8 @@ export const GoalsHeader = ({
           <Input
             placeholder="Search goals..."
             className="pl-10 w-full"
-            onChange={(e) => onSearch(e.target.value)}
+            value={searchInput}
+            onChange={handleSearchChange}
           />
         </div>
         <div className="flex gap-2 justify-end">
