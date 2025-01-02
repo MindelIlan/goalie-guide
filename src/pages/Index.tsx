@@ -17,6 +17,7 @@ interface Goal {
   tags: string[];
   user_id: string;
   created_at: string;
+  folder_id: number | null;
 }
 
 const Index = () => {
@@ -80,6 +81,7 @@ const Index = () => {
       description: newGoal.description,
       target_date: newGoal.target_date,
       tags: newGoal.tags,
+      folder_id: newGoal.folder_id,
       progress: 0,
       user_id: user.id,
     };

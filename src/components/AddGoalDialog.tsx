@@ -9,17 +9,25 @@ import { TagInput } from "./TagInput";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
+interface Folder {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
 interface AddGoalDialogProps {
   onAddGoal: (goal: {
     title: string;
     description: string;
     target_date: string;
     tags: string[];
-  }) => Promise<number | undefined>; // Updated to return the goal ID
+    folder_id?: number | null;
+  }) => Promise<number | undefined>;
+  folders: Folder[];
   children?: React.ReactNode;
 }
 
-export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
+export const AddGoalDialog = ({ onAddGoal, folders, children }: AddGoalDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [target_date, setTargetDate] = useState("");
@@ -27,6 +35,7 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
   const [subgoals, setSubgoals] = useState<string[]>([]);
   const [newSubgoal, setNewSubgoal] = useState("");
   const [open, setOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleAddSubgoal = () => {
@@ -44,12 +53,15 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
     e.preventDefault();
     
     try {
-      // First create the main goal and get its ID
-      const goalId = await onAddGoal({ title, description, target_date, tags });
+      const goalId = await onAddGoal({ 
+        title, 
+        description, 
+        target_date, 
+        tags,
+        folder_id: selectedFolderId 
+      });
       
-      // If there are subgoals and we have a goal ID, create them
       if (subgoals.length > 0 && goalId) {
-        // Create all subgoals
         const { error: subgoalsError } = await supabase
           .from("subgoals")
           .insert(
@@ -75,12 +87,12 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
         }
       }
 
-      // Reset form
       setTitle("");
       setDescription("");
       setTargetDate("");
       setTags([]);
       setSubgoals([]);
+      setSelectedFolderId(null);
       setOpen(false);
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -126,6 +138,22 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
               placeholder="Describe your goal"
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="folder">Folder (Optional)</Label>
+            <select
+              id="folder"
+              value={selectedFolderId || ""}
+              onChange={(e) => setSelectedFolderId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2"
+            >
+              <option value="">No Folder</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="target_date">Target Date</Label>

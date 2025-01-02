@@ -2,8 +2,10 @@ import { Profile } from "@/components/Profile";
 import { GoalsList } from "@/components/GoalsList";
 import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
-import { useState } from "react";
+import { FoldersList } from "./FoldersList";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface Goal {
   id: number;
@@ -13,6 +15,13 @@ interface Goal {
   target_date: string;
   tags: string[];
   created_at: string;
+  folder_id: number | null;
+}
+
+interface Folder {
+  id: number;
+  name: string;
+  description: string | null;
 }
 
 interface GoalsContainerProps {
@@ -24,6 +33,7 @@ interface GoalsContainerProps {
     description: string;
     target_date: string;
     tags: string[];
+    folder_id?: number | null;
   }) => Promise<number | undefined>;
 }
 
@@ -31,7 +41,34 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
   const [showDuplicatesDialog, setShowDuplicatesDialog] = useState(false);
   const [duplicateGoals, setDuplicateGoals] = useState<Goal[]>([]);
   const [duplicateGoalIds, setDuplicateGoalIds] = useState<Set<number>>(new Set());
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchFolders();
+  }, []);
+
+  const fetchFolders = async () => {
+    const { data, error } = await supabase
+      .from('goal_folders')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch folders",
+        variant: "destructive",
+      });
+    } else {
+      setFolders(data || []);
+    }
+  };
+
+  const filteredGoals = selectedFolderId
+    ? goals.filter(goal => goal.folder_id === selectedFolderId)
+    : goals;
 
   const checkForDuplicates = (goalsList: Goal[] = goals) => {
     console.log('Checking for duplicates among', goalsList.length, 'goals');
@@ -81,13 +118,21 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         <Profile userId={userId} />
       </div>
 
+      <FoldersList
+        folders={folders}
+        onFoldersChange={setFolders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={setSelectedFolderId}
+      />
+
       <GoalsHeader 
         onAddGoal={onAddGoal}
         onCheckDuplicates={() => checkForDuplicates()}
+        folders={folders}
       />
       
       <GoalsList 
-        goals={goals} 
+        goals={filteredGoals} 
         setGoals={setGoals} 
         duplicateGoals={duplicateGoalIds}
       />
@@ -99,7 +144,6 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         onDuplicateDeleted={() => {
           setShowDuplicatesDialog(false);
           setDuplicateGoalIds(new Set());
-          // Trigger a refresh of the goals list
           const event = new CustomEvent('goals-updated');
           window.dispatchEvent(event);
         }}

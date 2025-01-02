@@ -9,10 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      goal_folders: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
           description: string | null
+          folder_id: number | null
           id: number
           progress: number | null
           tags: string[] | null
@@ -23,6 +48,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          folder_id?: number | null
           id?: number
           progress?: number | null
           tags?: string[] | null
@@ -33,6 +59,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          folder_id?: number | null
           id?: number
           progress?: number | null
           tags?: string[] | null
@@ -41,6 +68,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "goals_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "goal_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goals_user_id_fkey_profiles"
             columns: ["user_id"]
