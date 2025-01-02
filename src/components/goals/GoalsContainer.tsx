@@ -151,7 +151,7 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 animate-fade-in">
+      <div className="bg-gradient-to-r from-[#accbee] to-[#e7f0fd] dark:from-[#2a3f54] dark:to-[#517fa4] rounded-xl shadow-sm border p-6 mb-8 animate-fade-in">
         <Profile userId={userId} />
       </div>
 
