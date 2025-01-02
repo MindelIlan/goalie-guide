@@ -10,14 +10,16 @@ export const generateGoalSuggestions = async (description: string): Promise<Goal
       messages: [
         {
           role: "system",
-          content: "You are a helpful AI assistant that suggests personalized goals based on user descriptions. Provide 3 specific, actionable goals."
+          content: `You are a helpful AI assistant that suggests personalized goals based on user descriptions. 
+          Provide 3 specific, actionable goals in JSON format.
+          The response should be a valid JSON object with a 'goals' array containing objects with 'title', 'description', and 'tags' fields.`
         },
         {
           role: "user",
-          content: `Based on this description, suggest 3 specific goals: ${description}`
+          content: `Based on this description, suggest 3 specific goals in JSON format: ${description}`
         }
       ],
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       response_format: { type: "json_object" },
       max_tokens: 500,
     });
