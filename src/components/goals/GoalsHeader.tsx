@@ -14,7 +14,11 @@ interface GoalsHeaderProps {
   }) => Promise<number | undefined>;
   onCheckDuplicates: () => void;
   onSearch: (query: string) => void;
-  folders: { id: number; name: string }[];
+  folders: Array<{
+    id: number;
+    name: string;
+    description?: string | null;
+  }>;
 }
 
 export const GoalsHeader = ({ 
