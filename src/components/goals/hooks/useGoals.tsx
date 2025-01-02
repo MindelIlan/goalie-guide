@@ -16,15 +16,25 @@ interface Goal {
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
+
     const fetchGoals = async () => {
+      if (!isMounted) return;
+      
       setIsLoading(true);
+      setError(null);
+
       try {
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session) {
           console.log('No active session found');
+          setGoals([]);
           return;
         }
 
@@ -33,30 +43,48 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
           .select('*')
           .eq('user_id', session.session.user.id);
 
+        if (!isMounted) return;
+
         if (error) {
           console.error('Error fetching goals:', error);
-          toast({
-            title: "Error",
-            description: "Failed to fetch goals",
-            variant: "destructive",
-          });
+          setError(error);
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(fetchGoals, 1000 * retryCount); // Exponential backoff
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to fetch goals",
+              variant: "destructive",
+            });
+          }
         } else {
           setGoals(data || []);
+          retryCount = 0;
         }
       } catch (err) {
+        if (!isMounted) return;
         console.error('Unexpected error fetching goals:', err);
+        setError(err as Error);
         toast({
           title: "Error",
           description: "An unexpected error occurred while fetching goals",
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchGoals();
-  }, [selectedFolderId]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedFolderId]); // Only re-fetch when folder changes
 
   const filteredGoals = selectedFolderId
     ? goals.filter(goal => goal.folder_id === selectedFolderId)
@@ -85,6 +113,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     goals: searchedGoals,
     setGoals,
     isLoading,
+    error,
     stats
   };
 };
