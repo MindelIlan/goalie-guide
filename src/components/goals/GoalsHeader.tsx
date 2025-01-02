@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce"; // We'll create this hook
+import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Folder {
   id: number;
@@ -35,7 +35,7 @@ export const GoalsHeader = ({
   const debouncedSearch = useDebounce(searchInput, 300);
 
   // Update search when debounced value changes
-  useState(() => {
+  useEffect(() => {
     onSearch(debouncedSearch);
   }, [debouncedSearch, onSearch]);
 
