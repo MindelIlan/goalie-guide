@@ -67,6 +67,44 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
     }
   };
 
+  const checkForDuplicates = () => {
+    const duplicates: Goal[] = [];
+    const duplicateIds = new Set<number>();
+    
+    // Create a map to store goals by their title and description
+    const goalMap = new Map<string, Goal[]>();
+    
+    goals.forEach(goal => {
+      const key = `${goal.title.toLowerCase()}-${goal.description?.toLowerCase() || ''}`;
+      if (!goalMap.has(key)) {
+        goalMap.set(key, [goal]);
+      } else {
+        const existingGoals = goalMap.get(key) || [];
+        existingGoals.push(goal);
+        goalMap.set(key, existingGoals);
+        
+        // If this is the first duplicate found for this key, add the first goal too
+        if (existingGoals.length === 2) {
+          duplicates.push(existingGoals[0]);
+          duplicateIds.add(existingGoals[0].id);
+        }
+        duplicates.push(goal);
+        duplicateIds.add(goal.id);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      setDuplicateGoals(duplicates);
+      setDuplicateGoalIds(duplicateIds);
+      setShowDuplicatesDialog(true);
+    } else {
+      toast({
+        title: "No duplicates found",
+        description: "All your goals are unique!",
+      });
+    }
+  };
+
   const totalGoals = goals.length;
   const completedGoals = goals.filter(goal => goal.progress === 100).length;
   const averageProgress = totalGoals > 0
