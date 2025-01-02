@@ -30,13 +30,31 @@ export const FoldersList = ({
   const { toast } = useToast();
 
   const handleAddFolder = async () => {
-    if (!newFolderName.trim()) return;
+    const trimmedName = newFolderName.trim();
+    if (!trimmedName) {
+      toast({
+        title: "Error",
+        description: "Please enter a folder name",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      if (!userData.user) {
+        throw new Error("No authenticated user found");
+      }
+
       const { data, error } = await supabase
         .from('goal_folders')
-        .insert([{ name: newFolderName.trim() }])
+        .insert([{ 
+          name: trimmedName,
+          user_id: userData.user.id 
+        }])
         .select()
         .single();
 
@@ -52,11 +70,11 @@ export const FoldersList = ({
           description: "Folder created successfully",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding folder:', error);
       toast({
         title: "Error",
-        description: "Failed to create folder. Please try again.",
+        description: error.message || "Failed to create folder. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -72,6 +90,7 @@ export const FoldersList = ({
           variant="ghost"
           size="sm"
           onClick={() => setIsAddingFolder(!isAddingFolder)}
+          disabled={isLoading}
         >
           <Plus className="h-4 w-4" />
           Add Folder
@@ -87,6 +106,7 @@ export const FoldersList = ({
             className="flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !isLoading) {
+                e.preventDefault();
                 handleAddFolder();
               }
             }}
