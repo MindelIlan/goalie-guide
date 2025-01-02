@@ -3,6 +3,7 @@ import { GoalsList } from "@/components/GoalsList";
 import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Goal {
   id: number;
@@ -25,6 +26,7 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
   const [showDuplicatesDialog, setShowDuplicatesDialog] = useState(false);
   const [duplicateGoals, setDuplicateGoals] = useState<Goal[]>([]);
   const [duplicateGoalIds, setDuplicateGoalIds] = useState<Set<number>>(new Set());
+  const { toast } = useToast();
 
   const checkForDuplicates = (goalsList: Goal[] = goals) => {
     console.log('Checking for duplicates among', goalsList.length, 'goals');
@@ -53,8 +55,18 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
 
     setDuplicateGoals(duplicates);
     setDuplicateGoalIds(duplicateIds);
+    
     if (duplicates.length > 0) {
       setShowDuplicatesDialog(true);
+      toast({
+        title: "Duplicates Found",
+        description: `Found ${duplicates.length} duplicate goals. Please review them in the dialog.`,
+      });
+    } else {
+      toast({
+        title: "No Duplicates",
+        description: "No duplicate goals were found.",
+      });
     }
   };
 
