@@ -4,7 +4,7 @@ import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
 import { FoldersList } from "./FoldersList";
 import { GoalsStats } from "./GoalsStats";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -44,6 +44,7 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
   const [duplicateGoalIds, setDuplicateGoalIds] = useState<Set<number>>(new Set());
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -111,9 +112,22 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
     ? Math.round(goals.reduce((sum, goal) => sum + (goal.progress || 0), 0) / totalGoals)
     : 0;
 
-  const filteredGoals = selectedFolderId
-    ? goals.filter(goal => goal.folder_id === selectedFolderId)
-    : goals;
+  const filteredGoals = useMemo(() => {
+    let filtered = selectedFolderId
+      ? goals.filter(goal => goal.folder_id === selectedFolderId)
+      : goals;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(goal =>
+        goal.title.toLowerCase().includes(query) ||
+        goal.description?.toLowerCase().includes(query) ||
+        goal.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [goals, selectedFolderId, searchQuery]);
 
   return (
     <>
@@ -137,7 +151,8 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
 
       <GoalsHeader 
         onAddGoal={onAddGoal}
-        onCheckDuplicates={() => checkForDuplicates()}
+        onCheckDuplicates={checkForDuplicates}
+        onSearch={setSearchQuery}
         folders={folders}
       />
       
