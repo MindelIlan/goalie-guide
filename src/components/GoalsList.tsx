@@ -26,20 +26,32 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
 
   const handleDeleteGoal = async (id: number) => {
     console.log('Attempting to delete goal:', id);
-    const { error } = await supabase.from("goals").delete().eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("goals")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      console.error('Error deleting goal:', error);
+      if (error) {
+        console.error('Error deleting goal:', error);
+        toast({
+          title: "Error",
+          description: `Failed to delete goal: ${error.message}. Code: ${error.code}`,
+          variant: "destructive",
+        });
+      } else {
+        setGoals(goals.filter((goal) => goal.id !== id));
+        toast({
+          title: "Success",
+          description: "Goal deleted successfully",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error deleting goal:', err);
       toast({
         title: "Error",
-        description: "Failed to delete goal: " + error.message,
+        description: "An unexpected error occurred while deleting the goal",
         variant: "destructive",
-      });
-    } else {
-      setGoals(goals.filter((goal) => goal.id !== id));
-      toast({
-        title: "Success",
-        description: "Goal deleted successfully",
       });
     }
   };
@@ -54,30 +66,39 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
     }
   ) => {
     console.log('Attempting to update goal:', id, updatedGoal);
-    const { data, error } = await supabase
-      .from("goals")
-      .update({
-        title: updatedGoal.title,
-        description: updatedGoal.description,
-        target_date: updatedGoal.target_date,
-        tags: updatedGoal.tags || [],
-      })
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("goals")
+        .update({
+          title: updatedGoal.title,
+          description: updatedGoal.description,
+          target_date: updatedGoal.target_date,
+          tags: updatedGoal.tags || [],
+        })
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error updating goal:', error);
+      if (error) {
+        console.error('Error updating goal:', error);
+        toast({
+          title: "Error",
+          description: `Failed to update goal: ${error.message}. Code: ${error.code}`,
+          variant: "destructive",
+        });
+      } else {
+        setGoals(goals.map((goal) => (goal.id === id ? { ...goal, ...data } : goal)));
+        toast({
+          title: "Success",
+          description: "Goal updated successfully!",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error updating goal:', err);
       toast({
         title: "Error",
-        description: "Failed to update goal: " + error.message,
+        description: "An unexpected error occurred while updating the goal",
         variant: "destructive",
-      });
-    } else {
-      setGoals(goals.map((goal) => (goal.id === id ? { ...goal, ...data } : goal)));
-      toast({
-        title: "Success",
-        description: "Goal updated successfully!",
       });
     }
   };
