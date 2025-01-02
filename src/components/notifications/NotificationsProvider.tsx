@@ -9,6 +9,7 @@ type Notification = {
   message: string | null;
   read: boolean;
   created_at: string;
+  metadata?: Record<string, any>;
 };
 
 type NotificationsContextType = {

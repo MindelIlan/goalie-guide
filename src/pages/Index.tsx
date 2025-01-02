@@ -65,6 +65,33 @@ const Index = () => {
     }
   };
 
+  const checkForDuplicateGoals = async (newGoal: Goal, existingGoals: Goal[]) => {
+    const duplicates = existingGoals.filter(goal => 
+      goal.title.toLowerCase() === newGoal.title.toLowerCase() &&
+      goal.description.toLowerCase() === newGoal.description.toLowerCase()
+    );
+
+    if (duplicates.length > 0) {
+      const { error } = await supabase
+        .from('notifications')
+        .insert([{
+          user_id: user?.id,
+          type: 'duplicate_goal',
+          title: 'Duplicate Goal Detected',
+          message: `You have a similar goal: "${newGoal.title}". Click to manage duplicates.`,
+          read: false,
+          metadata: {
+            originalGoalId: duplicates[0].id,
+            newGoalId: newGoal.id
+          }
+        }]);
+
+      if (error) {
+        console.error('Error creating duplicate goal notification:', error);
+      }
+    }
+  };
+
   const handleAddGoal = async (newGoal: Omit<Goal, "id" | "progress" | "user_id" | "created_at">) => {
     if (!user) return;
 
@@ -90,7 +117,9 @@ const Index = () => {
         variant: "destructive",
       });
     } else {
-      setGoals([...goals, data]);
+      const updatedGoals = [...goals, data];
+      setGoals(updatedGoals);
+      await checkForDuplicateGoals(data, goals);
       toast({
         title: "Success",
         description: "Goal added successfully!",
