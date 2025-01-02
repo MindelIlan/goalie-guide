@@ -25,16 +25,18 @@ interface AddGoalDialogProps {
   }) => Promise<number | undefined>;
   folders: Folder[];
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const AddGoalDialog = ({ onAddGoal, folders, children }: AddGoalDialogProps) => {
+export const AddGoalDialog = ({ onAddGoal, folders, children, open, onOpenChange }: AddGoalDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [target_date, setTargetDate] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [subgoals, setSubgoals] = useState<string[]>([]);
   const [newSubgoal, setNewSubgoal] = useState("");
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -93,7 +95,11 @@ export const AddGoalDialog = ({ onAddGoal, folders, children }: AddGoalDialogPro
       setTags([]);
       setSubgoals([]);
       setSelectedFolderId(null);
-      setOpen(false);
+      if (onOpenChange) {
+        onOpenChange(false);
+      } else {
+        setIsOpen(false);
+      }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
       toast({
@@ -104,8 +110,11 @@ export const AddGoalDialog = ({ onAddGoal, folders, children }: AddGoalDialogPro
     }
   };
 
+  const dialogOpen = open !== undefined ? open : isOpen;
+  const handleOpenChange = onOpenChange || setIsOpen;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <Button className="gap-2">

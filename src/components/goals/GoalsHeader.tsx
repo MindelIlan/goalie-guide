@@ -49,20 +49,14 @@ export const GoalsHeader = ({
           >
             Check Duplicates
           </Button>
-          <Button
-            onClick={() => setShowAddGoal(true)}
-          >
-            Add Goal
-          </Button>
+          <AddGoalDialog
+            onAddGoal={onAddGoal}
+            folders={folders}
+            open={showAddGoal}
+            onOpenChange={setShowAddGoal}
+          />
         </div>
       </div>
-
-      <AddGoalDialog
-        open={showAddGoal}
-        onOpenChange={setShowAddGoal}
-        onAddGoal={onAddGoal}
-        folders={folders}
-      />
     </div>
   );
 };
