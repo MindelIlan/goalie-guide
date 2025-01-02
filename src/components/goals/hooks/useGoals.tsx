@@ -18,6 +18,46 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const fetchGoals = async () => {
+      setIsLoading(true);
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session) {
+          console.log('No active session found');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('user_id', session.session.user.id);
+
+        if (error) {
+          console.error('Error fetching goals:', error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch goals",
+            variant: "destructive",
+          });
+        } else {
+          setGoals(data || []);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching goals:', err);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred while fetching goals",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, [selectedFolderId]);
+
   const filteredGoals = selectedFolderId
     ? goals.filter(goal => goal.folder_id === selectedFolderId)
     : goals;

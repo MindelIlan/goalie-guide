@@ -13,39 +13,45 @@ export const useFolders = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchFolders = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('goal_folders')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          console.error('Error fetching folders:', error);
-          toast({
-            title: "Error",
-            description: "Failed to fetch folders",
-            variant: "destructive",
-          });
-        } else {
-          setFolders(data || []);
-        }
-      } catch (err) {
-        console.error('Unexpected error fetching folders:', err);
+  const fetchFolders = async () => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        console.log('No active session found');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('goal_folders')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching folders:', error);
         toast({
           title: "Error",
-          description: "An unexpected error occurred while fetching folders",
+          description: "Failed to fetch folders",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
+      } else {
+        setFolders(data || []);
       }
-    };
+    } catch (err) {
+      console.error('Unexpected error fetching folders:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while fetching folders",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchFolders();
-  }, [toast]);
+  }, []);
 
   return { folders, setFolders, isLoading };
 };

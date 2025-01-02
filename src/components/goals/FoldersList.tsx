@@ -20,7 +20,7 @@ interface Folder {
 
 interface FoldersListProps {
   folders: Folder[];
-  onFoldersChange: (folders: Folder[]) => void;
+  onFoldersChange?: (folders: Folder[]) => void;
   selectedFolderId: number | null;
   onSelectFolder: (folderId: number | null) => void;
   goals: Goal[];

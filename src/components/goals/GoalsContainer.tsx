@@ -38,7 +38,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
   const [searchQuery, setSearchQuery] = useState("");
   
   const { goals, isLoading, stats } = useGoals(selectedFolderId, searchQuery);
-  const { folders, isLoading: isFoldersLoading } = useFolders();
+  const { folders, isLoading: isFoldersLoading, setFolders } = useFolders();
   const {
     showDuplicatesDialog,
     setShowDuplicatesDialog,
@@ -70,6 +70,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
         selectedFolderId={selectedFolderId}
         onSelectFolder={setSelectedFolderId}
         goals={goals}
+        onFoldersChange={setFolders}
       />
 
       <GoalsHeader 
