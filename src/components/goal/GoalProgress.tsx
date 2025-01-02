@@ -7,9 +7,13 @@ interface GoalProgressProps {
 }
 
 export const GoalProgress = ({ taskProgress, timeProgress }: GoalProgressProps) => {
-  // Calculate the fraction based on the percentage
-  const total = 100;
-  const completed = Math.round((taskProgress / 100) * total);
+  // For task progress, we now receive the actual completed count
+  // Calculate total based on whether it's the main goal (1) or subgoals
+  const total = taskProgress <= 1 ? 1 : Math.ceil(taskProgress * 100 / Math.max(taskProgress, 1));
+  const completed = Math.min(taskProgress, total);
+  
+  // Convert to percentage for the progress bar
+  const progressPercentage = (completed / total) * 100;
 
   return (
     <div className="space-y-4">
@@ -22,7 +26,7 @@ export const GoalProgress = ({ taskProgress, timeProgress }: GoalProgressProps) 
           <span>{completed}/{total}</span>
         </div>
         <Progress 
-          value={taskProgress} 
+          value={progressPercentage} 
           className="h-2"
           indicatorClassName="bg-primary transition-all"
         />

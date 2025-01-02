@@ -48,12 +48,12 @@ export const SubgoalsList = ({ goalId, onProgressUpdate }: SubgoalsListProps) =>
 
   const updateProgress = (currentSubgoals: Subgoal[]) => {
     if (currentSubgoals.length === 0) {
-      onProgressUpdate(0);
+      // If no subgoals, treat the main goal as a single task
+      onProgressUpdate(1); // Total tasks is 1
       return;
     }
     const completedCount = currentSubgoals.filter(sg => sg.completed).length;
-    const progress = Math.round((completedCount / currentSubgoals.length) * 100);
-    onProgressUpdate(progress);
+    onProgressUpdate(completedCount); // Pass the actual completed count
   };
 
   const addSubgoal = async () => {
