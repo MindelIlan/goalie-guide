@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
 import { SubgoalsList } from "./SubgoalsList";
@@ -8,7 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { GoalHeader } from "./goal/GoalHeader";
 import { GoalProgress } from "./goal/GoalProgress";
 import { GoalButtons } from "./goal/GoalButtons";
-import confetti from 'canvas-confetti';
+import { GoalTargetDate } from "./goal/GoalTargetDate";
+import { celebrateCompletion } from "./goal/GoalCelebration";
 
 interface GoalCardProps {
   goal: {
@@ -33,44 +33,11 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const [previousProgress, setPreviousProgress] = useState(goal.progress);
 
   useEffect(() => {
-    // Only celebrate if the progress changed from less than 100 to exactly 100
     if (previousProgress < 100 && goal.progress === 100) {
       celebrateCompletion();
     }
     setPreviousProgress(goal.progress);
   }, [goal.progress, previousProgress]);
-
-  const celebrateCompletion = () => {
-    const duration = 3 * 1000;
-    const animationEnd = Date.now() + duration;
-
-    const randomInRange = (min: number, max: number) => {
-      return Math.random() * (max - min) + min;
-    };
-
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-        return;
-      }
-
-      const particleCount = 50;
-
-      confetti({
-        particleCount,
-        startVelocity: 30,
-        spread: 360,
-        origin: {
-          x: randomInRange(0.1, 0.9),
-          y: Math.random() - 0.2
-        },
-        colors: ['#F97316', '#0D9488', '#8B5CF6', '#D946EF', '#1EAEDB'],
-        disableForReducedMotion: true
-      });
-    }, 250);
-  };
 
   const updateGoalProgress = async (progress: number) => {
     const { error } = await supabase
@@ -138,10 +105,7 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
         timeProgress={timeProgress}
       />
       
-      <div className="mt-4 text-sm text-gray-500 flex items-center gap-2">
-        <Calendar className="h-4 w-4" />
-        Target: {new Date(goal.target_date).toLocaleDateString()}
-      </div>
+      <GoalTargetDate targetDate={goal.target_date} />
 
       <GoalButtons
         showSubgoals={showSubgoals}
