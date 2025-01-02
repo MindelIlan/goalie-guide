@@ -24,26 +24,36 @@ interface GoalsContainerProps {
 export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsContainerProps) => {
   const [showDuplicatesDialog, setShowDuplicatesDialog] = useState(false);
   const [duplicateGoals, setDuplicateGoals] = useState<Goal[]>([]);
+  const [duplicateGoalIds, setDuplicateGoalIds] = useState<Set<number>>(new Set());
 
   const checkForDuplicates = (goalsList: Goal[] = goals) => {
+    console.log('Checking for duplicates among', goalsList.length, 'goals');
     const duplicates: Goal[] = [];
+    const duplicateIds = new Set<number>();
     const seen = new Map<string, Goal>();
 
     goalsList.forEach(goal => {
       const key = `${goal.title.toLowerCase()}-${goal.description?.toLowerCase() || ''}`;
+      console.log('Checking goal:', goal.title, 'with key:', key);
       
       if (seen.has(key)) {
         if (!duplicates.includes(seen.get(key)!)) {
           duplicates.push(seen.get(key)!);
+          duplicateIds.add(seen.get(key)!.id);
         }
         duplicates.push(goal);
+        duplicateIds.add(goal.id);
       } else {
         seen.set(key, goal);
       }
     });
 
+    console.log('Found duplicate goals:', duplicates.length);
+    console.log('Duplicate IDs:', Array.from(duplicateIds));
+
+    setDuplicateGoals(duplicates);
+    setDuplicateGoalIds(duplicateIds);
     if (duplicates.length > 0) {
-      setDuplicateGoals(duplicates);
       setShowDuplicatesDialog(true);
     }
   };
@@ -59,7 +69,11 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         onCheckDuplicates={() => checkForDuplicates()}
       />
       
-      <GoalsList goals={goals} setGoals={setGoals} />
+      <GoalsList 
+        goals={goals} 
+        setGoals={setGoals} 
+        duplicateGoals={duplicateGoalIds}
+      />
 
       <DuplicateGoalsDialog
         open={showDuplicatesDialog}
@@ -67,6 +81,7 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         duplicateGoals={duplicateGoals}
         onDuplicateDeleted={() => {
           setShowDuplicatesDialog(false);
+          setDuplicateGoalIds(new Set());
           // Trigger a refresh of the goals list
           const event = new CustomEvent('goals-updated');
           window.dispatchEvent(event);
