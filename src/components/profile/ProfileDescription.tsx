@@ -8,7 +8,7 @@ interface ProfileDescriptionProps {
   description: string | null;
   username: string | null;
   openai_api_key?: string | null;
-  onDescriptionUpdate: (description: string) => void;
+  onDescriptionUpdate: (description: string, username: string) => void;
 }
 
 export const ProfileDescription = ({ 
@@ -21,7 +21,7 @@ export const ProfileDescription = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const handleUpdate = (newDescription: string, newUsername: string) => {
-    onDescriptionUpdate(newDescription);
+    onDescriptionUpdate(newDescription, newUsername);
     setIsEditing(false);
   };
 
@@ -41,6 +41,9 @@ export const ProfileDescription = ({
     </div>
   ) : (
     <div className="w-full text-center">
+      {username && (
+        <p className="text-lg font-semibold mb-2">@{username}</p>
+      )}
       <p className="text-gray-600 mb-4">
         {description || "No description yet"}
       </p>

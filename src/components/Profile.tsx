@@ -91,11 +91,11 @@ export const Profile = ({ userId }: { userId: string }) => {
   };
 
   const handleAvatarUpdate = (url: string) => {
-    setProfile({ ...profile, avatar_url: url });
+    setProfile(prev => ({ ...prev, avatar_url: url }));
   };
 
-  const handleDescriptionUpdate = (description: string) => {
-    setProfile({ ...profile, description });
+  const handleDescriptionUpdate = (description: string, username: string) => {
+    setProfile(prev => ({ ...prev, description, username }));
   };
 
   const showAIGenerator = profile.description && profile.description.length >= 50;

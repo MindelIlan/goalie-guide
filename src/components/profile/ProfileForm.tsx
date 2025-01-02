@@ -40,7 +40,9 @@ export const ProfileForm = ({
 
       if (error) throw error;
 
+      // Call onUpdate to update parent component state
       onUpdate(newDescription, newUsername);
+      
       toast({
         title: "Success",
         description: "Profile updated successfully",
