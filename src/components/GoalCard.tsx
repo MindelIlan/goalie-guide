@@ -30,14 +30,15 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const [showSimilar, setShowSimilar] = useState(false);
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [hasCelebrated, setHasCelebrated] = useState(false);
+  const [previousProgress, setPreviousProgress] = useState(goal.progress);
 
   useEffect(() => {
-    if (goal.progress === 100 && !hasCelebrated) {
+    // Only celebrate if the progress changed from less than 100 to exactly 100
+    if (previousProgress < 100 && goal.progress === 100) {
       celebrateCompletion();
-      setHasCelebrated(true);
     }
-  }, [goal.progress, hasCelebrated]);
+    setPreviousProgress(goal.progress);
+  }, [goal.progress, previousProgress]);
 
   const celebrateCompletion = () => {
     const duration = 3 * 1000;
