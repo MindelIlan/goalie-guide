@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, vi, beforeEach, expect } from "vitest";
 import { ProfileAvatar } from "../ProfileAvatar";
 import { supabase } from "@/lib/supabase";
-import { vi } from "vitest";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase", () => ({
@@ -30,7 +30,7 @@ describe("ProfileAvatar", () => {
 
   it("renders avatar with fallback when no URL provided", () => {
     render(<ProfileAvatar userId={mockUserId} onAvatarChange={mockOnAvatarChange} />);
-    expect(screen.getByText("TE")).toBeInTheDocument(); // First two letters of test-user-id
+    expect(screen.getByText("TE")).toBeInTheDocument();
   });
 
   it("renders avatar with image when URL provided", () => {

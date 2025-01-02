@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, vi, beforeEach, expect } from "vitest";
 import { AvatarUploader } from "../avatar/AvatarUploader";
 import { supabase } from "@/lib/supabase";
-import { vi } from "vitest";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase", () => ({

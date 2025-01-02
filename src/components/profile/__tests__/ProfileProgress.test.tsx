@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, vi, beforeEach, expect } from "vitest";
 import { ProfileProgress } from "../ProfileProgress";
 import { supabase } from "@/lib/supabase";
-import { vi } from "vitest";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase", () => ({
@@ -36,7 +36,7 @@ describe("ProfileProgress", () => {
   });
 
   it("doesn't render when there are no goals", async () => {
-    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+    const mockFrom = vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => Promise.resolve({
           data: [],
@@ -44,6 +44,8 @@ describe("ProfileProgress", () => {
         })),
       })),
     }));
+
+    vi.mocked(supabase.from).mockImplementation(mockFrom);
 
     const { container } = render(<ProfileProgress userId={mockUserId} />);
     await waitFor(() => {
