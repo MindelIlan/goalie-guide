@@ -2,18 +2,13 @@ import { Button } from "@/components/ui/button";
 import { AddGoalDialog } from "@/components/AddGoalDialog";
 import { Plus } from "lucide-react";
 
-interface Goal {
-  id: number;
-  title: string;
-  description: string;
-  progress: number;
-  target_date: string;
-  tags: string[];
-  created_at: string;
-}
-
 interface GoalsHeaderProps {
-  onAddGoal: (goal: Omit<Goal, "id" | "progress" | "user_id" | "created_at">) => void;
+  onAddGoal: (goal: {
+    title: string;
+    description: string;
+    target_date: string;
+    tags: string[];
+  }) => Promise<number | undefined>;
   onCheckDuplicates: () => void;
 }
 

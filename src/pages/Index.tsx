@@ -96,6 +96,7 @@ const Index = () => {
         description: "Failed to add goal",
         variant: "destructive",
       });
+      return undefined;
     } else {
       const updatedGoals = [...goals, data];
       setGoals(updatedGoals);
@@ -104,6 +105,7 @@ const Index = () => {
         title: "Success",
         description: "Goal added successfully!",
       });
+      return data.id;
     }
   };
 

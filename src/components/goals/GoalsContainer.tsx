@@ -19,7 +19,12 @@ interface GoalsContainerProps {
   userId: string;
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
-  onAddGoal: (goal: Omit<Goal, "id" | "progress" | "user_id" | "created_at">) => void;
+  onAddGoal: (goal: {
+    title: string;
+    description: string;
+    target_date: string;
+    tags: string[];
+  }) => Promise<number | undefined>;
 }
 
 export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsContainerProps) => {
