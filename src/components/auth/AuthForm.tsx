@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { google as Google } from 'lucide-react';
+import { Chrome } from 'lucide-react';
 
 interface AuthFormProps {
   email: string;
@@ -101,7 +100,7 @@ export const AuthForm = ({
         className="w-full"
         type="button"
       >
-        <Google className="mr-2 h-4 w-4" />
+        <Chrome className="mr-2 h-4 w-4" />
         Google
       </Button>
     </form>
