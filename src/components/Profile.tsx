@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { ProfileDescription } from "./profile/ProfileDescription";
 import { Progress } from "@/components/ui/progress";
+import { AIGoalGenerator } from "./profile/AIGoalGenerator";
 
 interface ProfileData {
   avatar_url: string | null;
@@ -26,14 +27,13 @@ export const Profile = ({ userId }: { userId: string }) => {
   const [overallProgress, setOverallProgress] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!userId) return; // Add guard clause for empty userId
+    if (!userId) return;
     fetchProfile();
     fetchGoalsProgress();
   }, [userId]);
 
   const fetchProfile = async () => {
     try {
-      // First check if profile exists
       let { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -41,7 +41,6 @@ export const Profile = ({ userId }: { userId: string }) => {
         .maybeSingle();
 
       if (!data && !error) {
-        // If no profile exists, create one
         const { data: newProfile, error: insertError } = await supabase
           .from("profiles")
           .insert([{ id: userId }])
@@ -99,6 +98,8 @@ export const Profile = ({ userId }: { userId: string }) => {
     setProfile({ ...profile, description });
   };
 
+  const showAIGenerator = profile.description && profile.description.length >= 50;
+
   return (
     <Card className="p-6 mb-8">
       <div className="flex flex-col items-center space-y-4">
@@ -128,6 +129,14 @@ export const Profile = ({ userId }: { userId: string }) => {
             openai_api_key={profile.openai_api_key}
             onDescriptionUpdate={handleDescriptionUpdate}
           />
+          {showAIGenerator && (
+            <div className="mt-4">
+              <AIGoalGenerator 
+                description={profile.description || ""} 
+                userId={userId}
+              />
+            </div>
+          )}
         </div>
       </div>
     </Card>
