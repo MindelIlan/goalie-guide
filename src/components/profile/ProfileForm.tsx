@@ -30,18 +30,22 @@ export const ProfileForm = ({
     try {
       setIsLoading(true);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .update({ 
           description: newDescription,
           username: newUsername || null
         })
-        .eq("id", userId);
+        .eq("id", userId)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      // Call onUpdate to update parent component state
-      onUpdate(newDescription, newUsername);
+      // Call onUpdate with the updated data from the response
+      if (data) {
+        onUpdate(data.description || "", data.username || "");
+      }
       
       toast({
         title: "Success",
