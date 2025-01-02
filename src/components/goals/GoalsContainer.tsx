@@ -45,6 +45,7 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,19 +53,32 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
   }, []);
 
   const fetchFolders = async () => {
-    const { data, error } = await supabase
-      .from('goal_folders')
-      .select('*')
-      .order('name');
-    
-    if (error) {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('goal_folders')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching folders:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch folders",
+          variant: "destructive",
+        });
+      } else {
+        setFolders(data || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching folders:', err);
       toast({
         title: "Error",
-        description: "Failed to fetch folders",
+        description: "An unexpected error occurred while fetching folders",
         variant: "destructive",
       });
-    } else {
-      setFolders(data || []);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,7 +86,6 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
     const duplicates: Goal[] = [];
     const duplicateIds = new Set<number>();
     
-    // Create a map to store goals by their title and description
     const goalMap = new Map<string, Goal[]>();
     
     goals.forEach(goal => {
@@ -84,7 +97,6 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
         existingGoals.push(goal);
         goalMap.set(key, existingGoals);
         
-        // If this is the first duplicate found for this key, add the first goal too
         if (existingGoals.length === 2) {
           duplicates.push(existingGoals[0]);
           duplicateIds.add(existingGoals[0].id);
@@ -128,6 +140,14 @@ export const GoalsContainer = ({ userId, goals, setGoals, onAddGoal }: GoalsCont
 
     return filtered;
   }, [goals, selectedFolderId, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <>
