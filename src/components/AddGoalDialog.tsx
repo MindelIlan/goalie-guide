@@ -15,7 +15,7 @@ interface AddGoalDialogProps {
     description: string;
     target_date: string;
     tags: string[];
-  }) => void;
+  }) => Promise<number | undefined>; // Updated to return the goal ID
   children?: React.ReactNode;
 }
 
@@ -43,33 +43,25 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // First create the main goal
-    onAddGoal({ title, description, target_date, tags });
-    
-    // If there are subgoals, create them
-    if (subgoals.length > 0) {
-      // Get the newly created goal's ID
-      const { data: goalData } = await supabase
-        .from("goals")
-        .select("id")
-        .eq("title", title)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (goalData) {
+    try {
+      // First create the main goal and get its ID
+      const goalId = await onAddGoal({ title, description, target_date, tags });
+      
+      // If there are subgoals and we have a goal ID, create them
+      if (subgoals.length > 0 && goalId) {
         // Create all subgoals
         const { error: subgoalsError } = await supabase
           .from("subgoals")
           .insert(
             subgoals.map(title => ({
-              goal_id: goalData.id,
+              goal_id: goalId,
               title,
               completed: false
             }))
           );
 
         if (subgoalsError) {
+          console.error("Error creating subgoals:", subgoalsError);
           toast({
             title: "Error",
             description: "Failed to create subgoals",
@@ -82,15 +74,22 @@ export const AddGoalDialog = ({ onAddGoal, children }: AddGoalDialogProps) => {
           });
         }
       }
-    }
 
-    // Reset form
-    setTitle("");
-    setDescription("");
-    setTargetDate("");
-    setTags([]);
-    setSubgoals([]);
-    setOpen(false);
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setTargetDate("");
+      setTags([]);
+      setSubgoals([]);
+      setOpen(false);
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create goal",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
