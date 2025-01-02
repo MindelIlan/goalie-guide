@@ -23,18 +23,20 @@ export const ProfileForm = ({
 }: ProfileFormProps) => {
   const [newDescription, setNewDescription] = useState(description || "");
   const [newUsername, setNewUsername] = useState(username || "");
-  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSave = async () => {
     try {
+      setIsLoading(true);
+      
       const { error } = await supabase
         .from("profiles")
-        .upsert({ 
-          id: userId, 
+        .update({ 
           description: newDescription,
           username: newUsername || null
-        });
+        })
+        .eq("id", userId);
 
       if (error) throw error;
 
@@ -47,9 +49,11 @@ export const ProfileForm = ({
       console.error("Error updating profile:", error);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,10 +67,8 @@ export const ProfileForm = ({
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
             placeholder="Enter your username..."
+            disabled={isLoading}
           />
-          {usernameError && (
-            <p className="text-sm text-red-500">{usernameError}</p>
-          )}
         </div>
 
         <div className="space-y-2">
@@ -77,16 +79,24 @@ export const ProfileForm = ({
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Tell us about yourself..."
             className="min-h-[100px]"
+            disabled={isLoading}
           />
         </div>
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>
+        <Button 
+          variant="outline" 
+          onClick={onCancel}
+          disabled={isLoading}
+        >
           Cancel
         </Button>
-        <Button onClick={handleSave}>
-          Save
+        <Button 
+          onClick={handleSave}
+          disabled={isLoading}
+        >
+          {isLoading ? "Saving..." : "Save"}
         </Button>
       </div>
     </div>
