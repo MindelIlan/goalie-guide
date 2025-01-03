@@ -87,12 +87,12 @@ export const AIAssistant = () => {
   if (!isExpanded) {
     return (
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
-        className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:bg-gray-50"
+        className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-300"
         onClick={() => setIsExpanded(true)}
       >
-        <Bot className="h-6 w-6 text-primary" />
+        <Bot className="h-6 w-6 text-white" />
       </Button>
     );
   }
