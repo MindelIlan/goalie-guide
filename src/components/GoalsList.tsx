@@ -4,8 +4,8 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
 import { BulkActions } from "./goals/list/BulkActions";
-import { EmptyGoalsList } from "./goals/list/EmptyGoalsList";
-import { GoalGridItem } from "./goals/list/GoalGridItem";
+import { GoalsListContent } from "./goals/list/GoalsListContent";
+import { DeleteConfirmDialog } from "./goals/list/DeleteConfirmDialog";
 
 interface GoalsListProps {
   goals: Goal[];
@@ -16,27 +16,28 @@ interface GoalsListProps {
 export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: GoalsListProps) => {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [selectedGoals, setSelectedGoals] = useState<Set<number>>(new Set());
+  const [goalToDelete, setGoalToDelete] = useState<number | null>(null);
 
   const handleDeleteGoal = async (id: number) => {
+    setGoalToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!goalToDelete) return;
+
     try {
       const { error } = await supabase
         .from("goals")
         .delete()
-        .eq("id", id);
+        .eq("id", goalToDelete);
 
       if (error) {
-        console.error('Error deleting goal:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete goal",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
+        throw error;
       }
 
       // Optimistically update the UI
-      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== id));
+      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalToDelete));
+      setGoalToDelete(null);
       
       toast({
         title: "Success",
@@ -116,16 +117,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         .delete()
         .in("id", Array.from(selectedGoals));
 
-      if (error) {
-        console.error('Error deleting goals:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete goals",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
+      if (error) throw error;
 
       // Optimistically update the UI
       setGoals(prevGoals => prevGoals.filter(goal => !selectedGoals.has(goal.id)));
@@ -186,30 +178,31 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         onBulkMove={handleBulkMove}
       />
       
-      <div className="grid gap-6 md:grid-cols-2">
-        {goals.map((goal, index) => (
-          <GoalGridItem
-            key={goal.id}
-            goal={goal}
-            index={index}
-            onDelete={handleDeleteGoal}
-            onEdit={() => setEditingGoal(goal)}
-            duplicateGoals={duplicateGoals}
-            selectedGoals={selectedGoals}
-            onSelect={handleGoalSelect}
-          />
-        ))}
-        {goals.length === 0 && <EmptyGoalsList />}
+      <GoalsListContent
+        goals={goals}
+        onDelete={handleDeleteGoal}
+        onEdit={() => setEditingGoal(goal)}
+        duplicateGoals={duplicateGoals}
+        selectedGoals={selectedGoals}
+        onSelect={handleGoalSelect}
+      />
 
-        {editingGoal && (
-          <EditGoalDialog
-            goal={editingGoal}
-            open={!!editingGoal}
-            onOpenChange={(open) => !open && setEditingGoal(null)}
-            onEditGoal={handleEditGoal}
-          />
-        )}
-      </div>
+      {editingGoal && (
+        <EditGoalDialog
+          goal={editingGoal}
+          open={!!editingGoal}
+          onOpenChange={(open) => !open && setEditingGoal(null)}
+          onEditGoal={handleEditGoal}
+        />
+      )}
+
+      <DeleteConfirmDialog
+        open={!!goalToDelete}
+        onOpenChange={(open) => !open && setGoalToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Goal"
+        description="Are you sure you want to delete this goal? This action cannot be undone."
+      />
     </div>
   );
 };
