@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 
 interface Goal {
-  id: number;
+  id: bigint;
   title: string;
   description: string;
   progress: number;
@@ -17,17 +17,32 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const { toast } = useToast();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  const maxRetries = 5;
+  const baseDelay = 2000; // 2 seconds
 
-  // Memoize fetchGoals to prevent unnecessary recreations
-  const fetchGoals = useCallback(async () => {
+  // Cleanup function
+  const cleanup = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  };
+
+  // Enhanced fetchGoals with better error handling and reconnection logic
+  const fetchGoals = useCallback(async (signal?: AbortSignal) => {
     try {
-      // First check if we have an active session
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
-        console.log('No active session found');
-        setGoals([]);
+        console.log('No active session found, waiting for session...');
         return;
       }
 
@@ -37,84 +52,105 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         throw new Error('Supabase connection is not healthy');
       }
 
-      // Only select the columns we need
       const query = supabase
         .from('goals')
         .select('id, title, description, progress, target_date, tags, created_at, folder_id')
         .eq('user_id', sessionData.session.user.id);
 
-      // Add folder filter if selected
       if (selectedFolderId !== null) {
         query.eq('folder_id', selectedFolderId);
       }
 
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
 
-      if (error) {
-        console.error('Error fetching goals:', error);
-        throw error;
+      if (fetchError) {
+        console.error('Error fetching goals:', fetchError);
+        throw fetchError;
       }
 
       setGoals(data || []);
       setError(null);
+      retryCountRef.current = 0; // Reset retry count on successful fetch
+      setIsReconnecting(false);
 
     } catch (err) {
+      if (signal?.aborted) {
+        console.log('Fetch aborted');
+        return;
+      }
+
       console.error('Error in fetchGoals:', err);
       setError(err as Error);
-      toast({
-        title: "Error",
-        description: "Could not load goals. Please try refreshing the page.",
-        variant: "destructive",
-      });
+
+      if (retryCountRef.current < maxRetries) {
+        const delay = baseDelay * Math.pow(2, retryCountRef.current);
+        console.log(`Retrying in ${delay}ms (attempt ${retryCountRef.current + 1}/${maxRetries})`);
+        
+        setIsReconnecting(true);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          retryCountRef.current++;
+          fetchGoals(signal);
+        }, delay);
+
+        // Show reconnecting toast only on first retry
+        if (retryCountRef.current === 0) {
+          toast({
+            title: "Connection issue detected",
+            description: "Attempting to reconnect...",
+            duration: 3000,
+          });
+        }
+      } else {
+        setIsReconnecting(false);
+        toast({
+          title: "Connection Error",
+          description: "Please refresh the page to try again",
+          variant: "destructive",
+        });
+      }
     }
   }, [selectedFolderId, toast]);
 
   useEffect(() => {
     let isMounted = true;
-    let retryCount = 0;
-    const maxRetries = 3;
-    const baseDelay = 1000; // 1 second
-
-    const fetchWithRetry = async () => {
-      if (!isMounted) return;
-      
-      try {
-        setIsLoading(true);
-        await fetchGoals();
-        retryCount = 0; // Reset retry count on success
-      } catch (err) {
-        if (!isMounted) return;
-
-        if (retryCount < maxRetries) {
-          retryCount++;
-          const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-          console.log(`Retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`);
-          
-          setTimeout(() => {
-            if (isMounted) {
-              fetchWithRetry();
-            }
-          }, delay);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+    setIsLoading(true);
 
     // Create new AbortController for this effect instance
     abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
-    fetchWithRetry();
+    const initFetch = async () => {
+      if (!isMounted) return;
+      await fetchGoals(signal);
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    };
+
+    initFetch();
+
+    // Set up real-time subscription for goals table
+    const goalsSubscription = supabase
+      .channel('goals_channel')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'goals' },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          if (isMounted) {
+            fetchGoals(signal);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     // Cleanup function
     return () => {
+      console.log('Cleaning up goals hook...');
       isMounted = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
+      cleanup();
+      goalsSubscription.unsubscribe();
     };
   }, [fetchGoals]);
 
@@ -143,6 +179,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     setGoals,
     isLoading,
     error,
-    stats
+    stats,
+    isReconnecting
   };
 };
