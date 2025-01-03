@@ -24,21 +24,20 @@ export const useGoalActions = ({
   };
 
   const confirmDelete = async () => {
-    const goalId = goals.find(g => g.id === goalToDelete)?.id;
-    if (!goalId) return;
+    if (!goalToDelete) return;
 
     try {
       const { error } = await supabase
         .from("goals")
         .delete()
-        .eq("id", goalId);
+        .eq("id", goalToDelete);
 
       if (error) {
         throw error;
       }
 
       // Optimistically update the UI
-      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalId));
+      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalToDelete));
       setGoalToDelete(null);
       
       toast({
@@ -50,7 +49,7 @@ export const useGoalActions = ({
       console.error('Error deleting goal:', error);
       toast({
         title: "Error",
-        description: "Failed to delete goal",
+        description: "Failed to delete goal. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
