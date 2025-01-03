@@ -1,17 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
-
-interface Goal {
-  id: bigint;
-  title: string;
-  description: string;
-  progress: number;
-  target_date: string;
-  tags: string[];
-  created_at: string;
-  folder_id: number | null;
-}
+import { Goal } from "@/types/goals";
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -37,7 +27,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     }
   };
 
-  // Enhanced fetchGoals with better error handling and reconnection logic
   const fetchGoals = useCallback(async (signal?: AbortSignal) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -46,31 +35,40 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         return;
       }
 
-      // Check Supabase health before proceeding
       const isHealthy = await checkSupabaseHealth();
       if (!isHealthy) {
         throw new Error('Supabase connection is not healthy');
       }
 
-      const query = supabase
+      let query = supabase
         .from('goals')
-        .select('id, title, description, progress, target_date, tags, created_at, folder_id')
+        .select('*')
         .eq('user_id', sessionData.session.user.id);
 
       if (selectedFolderId !== null) {
-        query.eq('folder_id', selectedFolderId);
+        query = query.eq('folder_id', selectedFolderId);
+      }
+
+      if (searchQuery) {
+        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
 
       const { data, error: fetchError } = await query;
 
       if (fetchError) {
-        console.error('Error fetching goals:', fetchError);
         throw fetchError;
       }
 
-      setGoals(data || []);
+      // Convert bigint to number for id and folder_id
+      const convertedGoals = (data || []).map(goal => ({
+        ...goal,
+        id: Number(goal.id),
+        folder_id: goal.folder_id ? Number(goal.folder_id) : null
+      }));
+
+      setGoals(convertedGoals);
       setError(null);
-      retryCountRef.current = 0; // Reset retry count on successful fetch
+      retryCountRef.current = 0;
       setIsReconnecting(false);
 
     } catch (err) {
@@ -92,7 +90,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
           fetchGoals(signal);
         }, delay);
 
-        // Show reconnecting toast only on first retry
         if (retryCountRef.current === 0) {
           toast({
             title: "Connection issue detected",
@@ -109,13 +106,12 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         });
       }
     }
-  }, [selectedFolderId, toast]);
+  }, [selectedFolderId, searchQuery, toast]);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
 
-    // Create new AbortController for this effect instance
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
@@ -129,7 +125,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
 
     initFetch();
 
-    // Set up real-time subscription for goals table
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on('postgres_changes', 
@@ -145,7 +140,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         console.log('Subscription status:', status);
       });
 
-    // Cleanup function
     return () => {
       console.log('Cleaning up goals hook...');
       isMounted = false;
@@ -153,18 +147,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
       goalsSubscription.unsubscribe();
     };
   }, [fetchGoals]);
-
-  // Filter goals based on search query
-  const filteredGoals = goals.filter(goal => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      goal.title.toLowerCase().includes(query) ||
-      goal.description?.toLowerCase().includes(query) ||
-      goal.tags?.some(tag => tag.toLowerCase().includes(query))
-    );
-  });
 
   const stats = {
     totalGoals: goals.length,
@@ -175,7 +157,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   };
 
   return {
-    goals: filteredGoals,
+    goals,
     setGoals,
     isLoading,
     error,

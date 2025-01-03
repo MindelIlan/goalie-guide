@@ -8,17 +8,7 @@ import { GoalsStats } from "./GoalsStats";
 import { useGoals } from "./hooks/useGoals";
 import { useDuplicateGoals } from "./hooks/useDuplicateGoals";
 import { useFolders } from "./hooks/useFolders";
-
-interface Goal {
-  id: number;
-  title: string;
-  description: string;
-  progress: number;
-  target_date: string;
-  tags: string[];
-  created_at: string;
-  folder_id: number | null;
-}
+import { Goal } from "@/types/goals";
 
 interface GoalsContainerProps {
   userId: string;
@@ -55,6 +45,13 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
     );
   }
 
+  // Convert goals to the correct type before passing to components
+  const typedGoals = goals.map(goal => ({
+    ...goal,
+    id: Number(goal.id), // Convert bigint to number
+    folder_id: goal.folder_id ? Number(goal.folder_id) : null // Convert bigint to number if exists
+  }));
+
   return (
     <>
       <ProfileContainer userId={userId} />
@@ -69,7 +66,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
         folders={folders}
         selectedFolderId={selectedFolderId}
         onSelectFolder={setSelectedFolderId}
-        goals={goals}
+        goals={typedGoals}
         onFoldersChange={setFolders}
       />
 
@@ -81,7 +78,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
       />
       
       <GoalsList 
-        goals={goals} 
+        goals={typedGoals} 
         setGoals={setGoals} 
         duplicateGoals={duplicateGoalIds}
       />
