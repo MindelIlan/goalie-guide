@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Users, X } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ListTodo, Share2 } from "lucide-react";
 
 interface GoalButtonsProps {
   showSubgoals: boolean;
   showSimilar: boolean;
-  onToggleSubgoals: () => void;
-  onToggleSimilar: () => void;
+  onToggleSubgoals: (e: React.MouseEvent) => void;
+  onToggleSimilar: (e: React.MouseEvent) => void;
 }
 
 export const GoalButtons = ({
@@ -16,38 +15,25 @@ export const GoalButtons = ({
   onToggleSimilar,
 }: GoalButtonsProps) => {
   return (
-    <div className="flex justify-center gap-2 mt-4">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSubgoals}
-            className="hover:bg-gray-100"
-          >
-            {showSubgoals ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{showSubgoals ? "Hide Subgoals" : "Show Subgoals"}</p>
-        </TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSimilar}
-            className="text-sm text-primary hover:text-primary/80 hover:bg-primary/10"
-          >
-            {showSimilar ? <X className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{showSimilar ? "Hide Similar Goals" : "Show Similar Goals"}</p>
-        </TooltipContent>
-      </Tooltip>
+    <div className="flex gap-2 mt-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onToggleSubgoals}
+        className={showSubgoals ? "bg-gray-100" : ""}
+      >
+        <ListTodo className="h-4 w-4 mr-2" />
+        Subgoals
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onToggleSimilar}
+        className={showSimilar ? "bg-gray-100" : ""}
+      >
+        <Share2 className="h-4 w-4 mr-2" />
+        Similar Goals
+      </Button>
     </div>
   );
 };
