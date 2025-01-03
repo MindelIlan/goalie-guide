@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+
+interface RealtimeGoalPayload extends RealtimePostgresChangesPayload {
+  new: Goal | null;
+  old: Goal | null;
+}
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -147,7 +153,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
           table: 'goals',
           filter: `user_id=eq.${supabase.auth.getUser()}`
         },
-        (payload) => {
+        (payload: RealtimeGoalPayload) => {
           console.log('Specific goal update received:', payload);
           // Only fetch if the change affects our current view
           if (
@@ -165,7 +171,14 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     return () => {
       console.log('Cleaning up goals hook...');
       isMounted = false;
-      cleanup();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       goalsSubscription.unsubscribe();
     };
   }, [fetchGoals]);
