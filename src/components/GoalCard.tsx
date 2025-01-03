@@ -87,19 +87,22 @@ export const GoalCard = ({
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowShareDialog(true);
   };
 
-  const handleEdit = async () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onEdit(goal.id);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onDelete(goal.id);
   };
 
-  const timeProgress = calculateTimeProgress();
+  const timeProgress = calculateTimeProgress(goal);
   const isCompleted = goal.progress === 100;
 
   return (
@@ -162,7 +165,9 @@ export const GoalCard = ({
 };
 
 const calculateTimeProgress = (goal: GoalCardProps['goal']) => {
-  const startDate = new Date(goal.created_at || new Date());
+  if (!goal?.created_at || !goal?.target_date) return 0;
+  
+  const startDate = new Date(goal.created_at);
   const targetDate = new Date(goal.target_date);
   const currentDate = new Date();
 
