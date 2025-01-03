@@ -12,6 +12,7 @@ import { useGoals } from "@/contexts/GoalsContext";
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
 
 interface GoalsContainerProps {
   userId: string;
@@ -38,6 +39,30 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
     duplicateGoalIds,
     checkForDuplicates
   } = useDuplicateGoals(allGoals);
+
+  useEffect(() => {
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('goals_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals',
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          refreshGoals();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refreshGoals]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
