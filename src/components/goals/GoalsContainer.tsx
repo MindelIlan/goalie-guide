@@ -5,15 +5,13 @@ import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
 import { FoldersList } from "./FoldersList";
 import { GoalsStats } from "./GoalsStats";
-import { useGoals } from "./hooks/useGoals";
+import { useFilteredGoals } from "@/hooks/useFilteredGoals";
 import { useDuplicateGoals } from "./hooks/useDuplicateGoals";
 import { useFolders } from "./hooks/useFolders";
-import { Goal } from "@/types/goals";
+import { useGoals } from "@/contexts/GoalsContext";
 
 interface GoalsContainerProps {
   userId: string;
-  goals: Goal[];
-  setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   onAddGoal: (goal: {
     title: string;
     description: string;
@@ -23,11 +21,12 @@ interface GoalsContainerProps {
   }) => Promise<number | undefined>;
 }
 
-export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoal }: GoalsContainerProps) => {
+export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { goals, isLoading, stats } = useGoals(selectedFolderId, searchQuery);
+  const { goals: allGoals, refreshGoals } = useGoals();
+  const { goals, stats } = useFilteredGoals(selectedFolderId, searchQuery);
   const { folders, isLoading: isFoldersLoading, setFolders } = useFolders();
   const {
     showDuplicatesDialog,
@@ -35,9 +34,9 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
     duplicateGoals,
     duplicateGoalIds,
     checkForDuplicates
-  } = useDuplicateGoals(goals);
+  } = useDuplicateGoals(allGoals);
 
-  if (isLoading || isFoldersLoading) {
+  if (isFoldersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -49,11 +48,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
     <>
       <ProfileContainer userId={userId} />
 
-      <GoalsStats
-        totalGoals={stats.totalGoals}
-        completedGoals={stats.completedGoals}
-        averageProgress={stats.averageProgress}
-      />
+      <GoalsStats {...stats} />
 
       <FoldersList
         folders={folders}
@@ -72,7 +67,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
       
       <GoalsList 
         goals={goals} 
-        setGoals={setGoals} 
+        setGoals={refreshGoals}
         duplicateGoals={duplicateGoalIds}
       />
 
@@ -82,8 +77,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
         duplicateGoals={duplicateGoals}
         onDuplicateDeleted={() => {
           setShowDuplicatesDialog(false);
-          const event = new CustomEvent('goals-updated');
-          window.dispatchEvent(event);
+          refreshGoals();
         }}
       />
     </>
