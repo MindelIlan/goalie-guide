@@ -45,13 +45,6 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
     );
   }
 
-  // Convert goals to the correct type before passing to components
-  const typedGoals = goals.map(goal => ({
-    ...goal,
-    id: Number(goal.id), // Convert bigint to number
-    folder_id: goal.folder_id ? Number(goal.folder_id) : null // Convert bigint to number if exists
-  }));
-
   return (
     <>
       <ProfileContainer userId={userId} />
@@ -66,7 +59,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
         folders={folders}
         selectedFolderId={selectedFolderId}
         onSelectFolder={setSelectedFolderId}
-        goals={typedGoals}
+        goals={goals}
         onFoldersChange={setFolders}
       />
 
@@ -78,7 +71,7 @@ export const GoalsContainer = ({ userId, goals: initialGoals, setGoals, onAddGoa
       />
       
       <GoalsList 
-        goals={typedGoals} 
+        goals={goals} 
         setGoals={setGoals} 
         duplicateGoals={duplicateGoalIds}
       />

@@ -40,14 +40,27 @@ export const AIAssistant = () => {
   const fetchUserGoals = async () => {
     const { data: goals, error } = await supabase
       .from('goals')
-      .select('title, description, progress, target_date, tags');
+      .select('*');
 
     if (error) {
       console.error('Error fetching goals:', error);
       return;
     }
 
-    setUserGoals(goals || []);
+    // Convert the goals to the correct type
+    const typedGoals: Goal[] = (goals || []).map(goal => ({
+      id: Number(goal.id),
+      title: goal.title,
+      description: goal.description,
+      progress: goal.progress,
+      target_date: goal.target_date,
+      tags: goal.tags || [],
+      user_id: goal.user_id,
+      created_at: goal.created_at,
+      folder_id: goal.folder_id ? Number(goal.folder_id) : null
+    }));
+
+    setUserGoals(typedGoals);
   };
 
   const suggestGoalsBasedOnProfile = async (description: string) => {
