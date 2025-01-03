@@ -22,13 +22,13 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't run auth check on the auth page itself
-  if (location.pathname === '/auth') {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth check for the auth page
+      if (location.pathname === '/auth') {
+        return;
+      }
+
       const isAuthenticated = await checkAuthStatus();
       if (!isAuthenticated) {
         toast({
@@ -52,7 +52,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return <>{children}</>;
 };
