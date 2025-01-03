@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { testOpenAIConnection } from "@/lib/ai/chat-service";
@@ -62,16 +62,23 @@ export const APIKeyForm = ({ userId, apiKey }: APIKeyFormProps) => {
 
       await testOpenAIConnection();
       
-      toast({
-        title: "Success",
-        description: "OpenAI API key is valid and working!",
-      });
+      // Success case: Don't show a toast, just continue silently
+      
     } catch (error) {
       console.error("Error testing API key:", error);
       toast({
-        title: "Error",
-        description: "Failed to verify OpenAI API key. Please check the key and try again.",
+        title: "OpenAI API Key Error",
+        description: "Please check your API key and try again. You can get your API key from the OpenAI dashboard.",
         variant: "destructive",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
+          >
+            Get API Key
+          </Button>
+        ),
       });
     } finally {
       setIsTesting(false);
