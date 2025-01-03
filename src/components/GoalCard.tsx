@@ -25,9 +25,18 @@ interface GoalCardProps {
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
   isDuplicate?: boolean;
+  isSelected?: boolean;
+  onSelect?: (ctrlKey: boolean) => void;
 }
 
-export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCardProps) => {
+export const GoalCard = ({ 
+  goal, 
+  onDelete, 
+  onEdit, 
+  isDuplicate = false,
+  isSelected = false,
+  onSelect
+}: GoalCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showSimilar, setShowSimilar] = useState(false);
   const [showSubgoals, setShowSubgoals] = useState(false);
@@ -77,6 +86,12 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
     if (showSubgoals) setShowSubgoals(false);
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onSelect) {
+      onSelect(e.ctrlKey);
+    }
+  };
+
   const timeProgress = calculateTimeProgress();
   const isCompleted = goal.progress === 100;
 
@@ -86,8 +101,10 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
       goalData={goal}
       isCompleted={isCompleted}
       isDuplicate={isDuplicate}
+      isSelected={isSelected}
       isHovered={isHovered}
       onHoverChange={setIsHovered}
+      onClick={handleClick}
     >
       <FolderBadge folderId={goal.folder_id} />
       
