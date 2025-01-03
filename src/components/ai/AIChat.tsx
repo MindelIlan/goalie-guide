@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, Copy, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, Copy, CheckCircle2, Plus } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { generateAIResponse, testOpenAIConnection } from "@/lib/ai/chat-service";
 import { Message, Goal } from "@/types/goals";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/lib/supabase";
 
 interface AIChatProps {
   messages: Message[];
@@ -109,6 +110,43 @@ export const AIChat = ({
     }
   };
 
+  const handleAddGoalToDashboard = async (goal: Goal) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add goals",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("goals").insert([{
+        title: goal.title,
+        description: goal.description,
+        target_date: goal.target_date,
+        tags: goal.tags,
+        progress: 0,
+        user_id: session.user.id
+      }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Goal added to your dashboard!",
+      });
+    } catch (error) {
+      console.error('Error adding goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add goal to dashboard",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <ScrollArea className="flex-1 pr-4 mb-4">
@@ -140,7 +178,7 @@ export const AIChat = ({
                   {message.suggestedGoals.map((goal, goalIndex) => (
                     <div key={goalIndex} className="bg-gray-50 p-3 rounded-lg">
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-medium">{goal.title}</h4>
                           <p className="text-sm text-gray-600">{goal.description}</p>
                           <div className="text-xs text-gray-500 mt-1">
@@ -157,6 +195,15 @@ export const AIChat = ({
                             ))}
                           </div>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 gap-1"
+                          onClick={() => handleAddGoalToDashboard(goal)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add to Dashboard
+                        </Button>
                       </div>
                     </div>
                   ))}
