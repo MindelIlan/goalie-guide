@@ -8,6 +8,7 @@ interface UseGoalActionsProps {
   setGoalToDelete: React.Dispatch<React.SetStateAction<number | null>>;
   selectedGoals: Set<number>;
   setSelectedGoals: React.Dispatch<React.SetStateAction<Set<number>>>;
+  goalToDelete: number | null;
 }
 
 export const useGoalActions = ({
@@ -15,7 +16,8 @@ export const useGoalActions = ({
   setGoals,
   setGoalToDelete,
   selectedGoals,
-  setSelectedGoals
+  setSelectedGoals,
+  goalToDelete
 }: UseGoalActionsProps) => {
   const handleDeleteGoal = async (id: number) => {
     setGoalToDelete(id);

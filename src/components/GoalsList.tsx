@@ -24,7 +24,8 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
     setGoals,
     setGoalToDelete,
     selectedGoals,
-    setSelectedGoals
+    setSelectedGoals,
+    goalToDelete
   });
 
   const handleGoalSelect = (goalId: number, ctrlKey: boolean) => {
