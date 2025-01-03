@@ -6,7 +6,7 @@ export interface Goal {
   target_date: string;
   tags: string[];
   created_at: string;
-  folder_id?: number | null;
+  folder_id: number | null;
   user_id: string;
 }
 
