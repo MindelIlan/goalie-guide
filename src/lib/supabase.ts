@@ -16,13 +16,22 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
   db: {
     schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2
+    }
   }
 });
 
-// Add health check function
+// Improved health check function
 export const checkSupabaseHealth = async () => {
   try {
-    const { data, error } = await supabase.from('goals').select('count').single();
+    // Use a lightweight query that doesn't fetch actual data
+    const { count, error } = await supabase
+      .from('goals')
+      .select('*', { count: 'exact', head: true });
+      
     if (error) throw error;
     console.log('Supabase connection healthy');
     return true;
