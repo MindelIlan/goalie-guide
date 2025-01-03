@@ -102,7 +102,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
         },
         async (payload: RealtimeGoalPayload) => {
           console.log('Goal update received:', payload);
-          // Only fetch if the change affects our current user's goals
+          
           const session = await supabase.auth.getSession();
           const userId = session.data.session?.user.id;
           

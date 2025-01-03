@@ -8,6 +8,6 @@ export type GoalPayload = {
 };
 
 export type RealtimeGoalPayload = RealtimePostgresChangesPayload<{
-  old: GoalPayload;
-  new: GoalPayload;
+  old: GoalPayload | null;
+  new: GoalPayload | null;
 }>;
