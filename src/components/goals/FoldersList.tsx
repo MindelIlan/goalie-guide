@@ -5,6 +5,7 @@ import { Plus, Folder, X, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
 
 interface Goal {
   id: number;
@@ -26,6 +27,51 @@ interface FoldersListProps {
   goals: Goal[];
 }
 
+const DroppableFolder = ({ 
+  folder, 
+  isSelected, 
+  stats, 
+  onSelect 
+}: { 
+  folder: Folder; 
+  isSelected: boolean; 
+  stats: { totalGoals: number; averageProgress: number; }; 
+  onSelect: () => void; 
+}) => {
+  const { setNodeRef } = useDroppable({
+    id: `folder-${folder.id}`,
+    data: folder,
+  });
+
+  return (
+    <div ref={setNodeRef}>
+      <Button
+        variant={isSelected ? "secondary" : "ghost"}
+        className="w-full justify-between group"
+        onClick={onSelect}
+      >
+        <span className="flex items-center">
+          <Folder className="h-4 w-4 mr-2" />
+          {folder.name}
+        </span>
+        <span className="flex items-center gap-2 text-sm text-gray-600">
+          <span>{stats.totalGoals} goals</span>
+          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </span>
+      </Button>
+      {isSelected && stats.totalGoals > 0 && (
+        <div className="ml-6 mr-2 mt-2 space-y-2">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Progress</span>
+            <span>{stats.averageProgress}%</span>
+          </div>
+          <Progress value={stats.averageProgress} className="h-1.5" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const FoldersList = ({ 
   folders, 
   onFoldersChange, 
@@ -37,6 +83,38 @@ export const FoldersList = ({
   const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    const goalId = parseInt(active.id.toString().replace('goal-', ''));
+    const folderId = over.id.toString().includes('unorganized') 
+      ? null 
+      : parseInt(over.id.toString().replace('folder-', ''));
+    
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .update({ folder_id: folderId })
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Goal moved to ${folderId ? 'folder' : 'unorganized goals'}`,
+      });
+    } catch (error) {
+      console.error('Error moving goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move goal",
+        variant: "destructive",
+      });
+    }
+  };
 
   const calculateFolderStats = (folderId: number | null) => {
     const folderGoals = goals.filter(goal => goal.folder_id === folderId);
@@ -110,112 +188,98 @@ export const FoldersList = ({
   };
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Folders</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsAddingFolder(!isAddingFolder)}
-          disabled={isLoading}
-        >
-          <Plus className="h-4 w-4" />
-          Add Folder
-        </Button>
-      </div>
-
-      {isAddingFolder && (
-        <div className="flex gap-2 mb-4">
-          <Input
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Enter folder name"
-            className="flex-1"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !isLoading) {
-                e.preventDefault();
-                handleAddFolder();
-              }
-            }}
-            disabled={isLoading}
-          />
-          <Button 
-            onClick={handleAddFolder} 
-            size="icon"
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Folders</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsAddingFolder(!isAddingFolder)}
             disabled={isLoading}
           >
             <Plus className="h-4 w-4" />
-          </Button>
-          <Button 
-            onClick={() => {
-              setIsAddingFolder(false);
-              setNewFolderName("");
-            }} 
-            variant="ghost" 
-            size="icon"
-            disabled={isLoading}
-          >
-            <X className="h-4 w-4" />
+            Add Folder
           </Button>
         </div>
-      )}
 
-      <div className="space-y-2">
-        <Button
-          variant={selectedFolderId === null ? "secondary" : "ghost"}
-          className="w-full justify-between group"
-          onClick={() => onSelectFolder(null)}
-        >
-          <span className="flex items-center">
-            <Folder className="h-4 w-4 mr-2" />
-            Unorganized Goals
-          </span>
-          <span className="flex items-center gap-2 text-sm text-gray-600">
-            <span>{unorganizedStats.totalGoals} goals</span>
-            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </span>
-        </Button>
-        {selectedFolderId === null && unorganizedStats.totalGoals > 0 && (
-          <div className="ml-6 mr-2 mt-2 space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Progress</span>
-              <span>{unorganizedStats.averageProgress}%</span>
-            </div>
-            <Progress value={unorganizedStats.averageProgress} className="h-1.5" />
+        {isAddingFolder && (
+          <div className="flex gap-2 mb-4">
+            <Input
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Enter folder name"
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isLoading) {
+                  e.preventDefault();
+                  handleAddFolder();
+                }
+              }}
+              disabled={isLoading}
+            />
+            <Button 
+              onClick={handleAddFolder} 
+              size="icon"
+              disabled={isLoading}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button 
+              onClick={() => {
+                setIsAddingFolder(false);
+                setNewFolderName("");
+              }} 
+              variant="ghost" 
+              size="icon"
+              disabled={isLoading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         )}
 
-        {folders.map((folder) => {
-          const stats = calculateFolderStats(folder.id);
-          return (
-            <div key={folder.id}>
-              <Button
-                variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
-                className="w-full justify-between group"
-                onClick={() => onSelectFolder(folder.id)}
-              >
-                <span className="flex items-center">
-                  <Folder className="h-4 w-4 mr-2" />
-                  {folder.name}
-                </span>
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>{stats.totalGoals} goals</span>
-                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Button>
-              {selectedFolderId === folder.id && stats.totalGoals > 0 && (
-                <div className="ml-6 mr-2 mt-2 space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Progress</span>
-                    <span>{stats.averageProgress}%</span>
-                  </div>
-                  <Progress value={stats.averageProgress} className="h-1.5" />
+        <div className="space-y-2">
+          <div ref={useDroppable({ id: 'unorganized' }).setNodeRef}>
+            <Button
+              variant={selectedFolderId === null ? "secondary" : "ghost"}
+              className="w-full justify-between group"
+              onClick={() => onSelectFolder(null)}
+            >
+              <span className="flex items-center">
+                <Folder className="h-4 w-4 mr-2" />
+                Unorganized Goals
+              </span>
+              <span className="flex items-center gap-2 text-sm text-gray-600">
+                <span>{unorganizedStats.totalGoals} goals</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Button>
+            {selectedFolderId === null && unorganizedStats.totalGoals > 0 && (
+              <div className="ml-6 mr-2 mt-2 space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Progress</span>
+                  <span>{unorganizedStats.averageProgress}%</span>
                 </div>
-              )}
-            </div>
-          );
-        })}
+                <Progress value={unorganizedStats.averageProgress} className="h-1.5" />
+              </div>
+            )}
+          </div>
+
+          {folders.map((folder) => {
+            const stats = calculateFolderStats(folder.id);
+            return (
+              <DroppableFolder
+                key={folder.id}
+                folder={folder}
+                isSelected={selectedFolderId === folder.id}
+                stats={stats}
+                onSelect={() => onSelectFolder(folder.id)}
+              />
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 };

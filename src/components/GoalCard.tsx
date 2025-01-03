@@ -9,6 +9,7 @@ import { GoalProgress } from "./goal/GoalProgress";
 import { GoalButtons } from "./goal/GoalButtons";
 import { GoalTargetDate } from "./goal/GoalTargetDate";
 import { celebrateCompletion } from "./goal/GoalCelebration";
+import { useDraggable } from '@dnd-kit/core';
 
 interface GoalCardProps {
   goal: {
@@ -31,6 +32,16 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [previousProgress, setPreviousProgress] = useState(goal.progress);
+
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `goal-${goal.id}`,
+    data: goal,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: 999,
+  } : undefined;
 
   useEffect(() => {
     if (previousProgress < 100 && goal.progress === 100) {
@@ -80,7 +91,11 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
 
   return (
     <Card 
-      className={`p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative ${
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative cursor-move ${
         isCompleted 
           ? 'bg-gradient-to-r from-teal-50 to-emerald-50 border-emerald-200'
           : isDuplicate

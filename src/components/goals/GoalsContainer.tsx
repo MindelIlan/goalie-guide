@@ -9,6 +9,7 @@ import { useFilteredGoals } from "@/hooks/useFilteredGoals";
 import { useDuplicateGoals } from "./hooks/useDuplicateGoals";
 import { useFolders } from "./hooks/useFolders";
 import { useGoals } from "@/contexts/GoalsContext";
+import { DndContext } from '@dnd-kit/core';
 
 interface GoalsContainerProps {
   userId: string;
@@ -50,26 +51,28 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
 
       <GoalsStats {...stats} />
 
-      <FoldersList
-        folders={folders}
-        selectedFolderId={selectedFolderId}
-        onSelectFolder={setSelectedFolderId}
-        goals={goals}
-        onFoldersChange={setFolders}
-      />
+      <DndContext>
+        <FoldersList
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          goals={goals}
+          onFoldersChange={setFolders}
+        />
 
-      <GoalsHeader 
-        onAddGoal={onAddGoal}
-        onCheckDuplicates={checkForDuplicates}
-        onSearch={setSearchQuery}
-        folders={folders}
-      />
-      
-      <GoalsList 
-        goals={goals} 
-        setGoals={refreshGoals}
-        duplicateGoals={duplicateGoalIds}
-      />
+        <GoalsHeader 
+          onAddGoal={onAddGoal}
+          onCheckDuplicates={checkForDuplicates}
+          onSearch={setSearchQuery}
+          folders={folders}
+        />
+        
+        <GoalsList 
+          goals={goals} 
+          setGoals={refreshGoals}
+          duplicateGoals={duplicateGoalIds}
+        />
+      </DndContext>
 
       <DuplicateGoalsDialog
         open={showDuplicatesDialog}
