@@ -7,10 +7,17 @@ export interface Goal {
   tags: string[];
   created_at: string;
   folder_id?: number | null;
+  user_id: string;
 }
 
 export interface Folder {
   id: number;
   name: string;
   description: string | null;
+}
+
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  suggestedGoals?: Goal[];
 }
