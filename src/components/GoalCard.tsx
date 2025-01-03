@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
 import { SimilarGoals } from "./SimilarGoals";
 import { ShareGoalDialog } from "./ShareGoalDialog";
 import { SubgoalsList } from "./SubgoalsList";
@@ -9,9 +8,8 @@ import { GoalProgress } from "./goal/GoalProgress";
 import { GoalButtons } from "./goal/GoalButtons";
 import { GoalTargetDate } from "./goal/GoalTargetDate";
 import { celebrateCompletion } from "./goal/GoalCelebration";
-import { useDraggable } from '@dnd-kit/core';
-import { Folder } from 'lucide-react';
-import { Badge } from './ui/badge';
+import { FolderBadge } from './goal/card/FolderBadge';
+import { GoalCardWrapper } from './goal/card/GoalCardWrapper';
 
 interface GoalCardProps {
   goal: {
@@ -35,37 +33,6 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [previousProgress, setPreviousProgress] = useState(goal.progress);
-  const [folderName, setFolderName] = useState<string | null>(null);
-
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: `goal-${goal.id}`,
-    data: goal,
-  });
-
-  useEffect(() => {
-    const fetchFolderName = async () => {
-      if (goal.folder_id) {
-        const { data, error } = await supabase
-          .from('goal_folders')
-          .select('name')
-          .eq('id', goal.folder_id)
-          .single();
-        
-        if (!error && data) {
-          setFolderName(data.name);
-        }
-      } else {
-        setFolderName(null);
-      }
-    };
-
-    fetchFolderName();
-  }, [goal.folder_id]);
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 999,
-  } : undefined;
 
   useEffect(() => {
     if (previousProgress < 100 && goal.progress === 100) {
@@ -114,27 +81,15 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const isCompleted = goal.progress === 100;
 
   return (
-    <Card 
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`p-6 transition-all duration-300 hover:shadow-lg animate-fade-in relative cursor-move ${
-        isCompleted 
-          ? 'bg-gradient-to-r from-teal-50 to-emerald-50 border-emerald-200'
-          : isDuplicate
-          ? 'bg-[#E5DEFF] border-purple-200 hover:border-purple-300'
-          : 'bg-white border-gray-200 hover:border-primary/20'
-      }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <GoalCardWrapper
+      goalId={goal.id}
+      goalData={goal}
+      isCompleted={isCompleted}
+      isDuplicate={isDuplicate}
+      isHovered={isHovered}
+      onHoverChange={setIsHovered}
     >
-      {folderName && (
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-          <Folder className="h-3 w-3" />
-          <span>{folderName}</span>
-        </div>
-      )}
+      <FolderBadge folderId={goal.folder_id} />
       
       <GoalHeader
         title={goal.title}
@@ -178,6 +133,6 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
       />
-    </Card>
+    </GoalCardWrapper>
   );
 };
