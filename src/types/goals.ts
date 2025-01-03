@@ -5,20 +5,7 @@ export interface Goal {
   progress: number;
   target_date: string;
   tags: string[];
-  user_id: string;
   created_at: string;
-  folder_id: number | null;
-}
-
-export interface SuggestedGoal {
-  title: string;
-  description: string;
-  target_date: string;
-  tags: string[];
-}
-
-export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  suggestedGoals?: SuggestedGoal[];
+  folder_id?: number | null;
+  user_id: string;
 }
