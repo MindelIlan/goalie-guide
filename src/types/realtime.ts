@@ -1,13 +1,16 @@
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
-export type GoalPayload = {
+export interface GoalPayload {
   id: number;
+  title: string;
+  description: string | null;
+  progress: number;
+  target_date: string | null;
   user_id: string;
   folder_id: number | null;
-  [key: string]: any;
-};
+  created_at: string;
+  tags: string[];
+}
 
-export type RealtimeGoalPayload = RealtimePostgresChangesPayload<{
-  old: GoalPayload | null;
-  new: GoalPayload | null;
-}>;
+export interface RealtimeGoalPayload {
+  old?: GoalPayload;
+  new?: GoalPayload;
+}
