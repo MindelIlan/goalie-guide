@@ -43,7 +43,10 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100"
-          onClick={onShare}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            onShare();
+          }}
         >
           <Share2 className="h-4 w-4" />
         </Button>
@@ -51,7 +54,10 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100"
-          onClick={onEdit}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            onEdit();
+          }}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -59,7 +65,10 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100 hover:text-red-500"
-          onClick={onDelete}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            onDelete();
+          }}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
