@@ -8,5 +8,26 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  },
+  db: {
+    schema: 'public'
   }
 });
+
+// Add health check function
+export const checkSupabaseHealth = async () => {
+  try {
+    const { data, error } = await supabase.from('goals').select('count').single();
+    if (error) throw error;
+    console.log('Supabase connection healthy');
+    return true;
+  } catch (error) {
+    console.error('Supabase health check failed:', error);
+    return false;
+  }
+};

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 
 interface Goal {
   id: number;
@@ -23,52 +23,72 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     let isMounted = true;
     let retryCount = 0;
     const maxRetries = 3;
-    const retryDelay = 1000; // 1 second
+    const baseDelay = 1000; // 1 second
 
     const fetchGoals = async () => {
       if (!isMounted) return;
       
       try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session) {
+        // First check if we have an active session
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
           console.log('No active session found');
           setGoals([]);
           return;
         }
 
-        const { data, error } = await supabase
+        // Check Supabase health before proceeding
+        const isHealthy = await checkSupabaseHealth();
+        if (!isHealthy) {
+          throw new Error('Supabase connection is not healthy');
+        }
+
+        // Construct the query
+        let query = supabase
           .from('goals')
           .select('*')
-          .eq('user_id', session.session.user.id);
+          .eq('user_id', sessionData.session.user.id);
+
+        // Add folder filter if selected
+        if (selectedFolderId !== null) {
+          query = query.eq('folder_id', selectedFolderId);
+        }
+
+        const { data, error } = await query;
 
         if (!isMounted) return;
 
         if (error) {
           console.error('Error fetching goals:', error);
-          setError(error);
-          
-          if (retryCount < maxRetries) {
-            retryCount++;
-            setTimeout(() => {
-              console.log(`Retrying fetch (${retryCount}/${maxRetries})...`);
-              fetchGoals();
-            }, retryDelay * retryCount); // Exponential backoff
-          } else {
-            toast({
-              title: "Error",
-              description: "Failed to fetch goals after multiple attempts",
-              variant: "destructive",
-            });
-          }
-        } else {
-          setGoals(data || []);
-          setError(null);
-          retryCount = 0;
+          throw error;
         }
+
+        setGoals(data || []);
+        setError(null);
+        retryCount = 0;
+
       } catch (err) {
         if (!isMounted) return;
-        console.error('Unexpected error fetching goals:', err);
+        console.error('Error in fetchGoals:', err);
         setError(err as Error);
+
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+          console.log(`Retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`);
+          
+          setTimeout(() => {
+            if (isMounted) {
+              fetchGoals();
+            }
+          }, delay);
+        } else {
+          toast({
+            title: "Error",
+            description: "Could not load goals. Please try refreshing the page.",
+            variant: "destructive",
+          });
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -79,11 +99,10 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     setIsLoading(true);
     fetchGoals();
 
-    // Cleanup function
     return () => {
       isMounted = false;
     };
-  }, [selectedFolderId]); // Only re-fetch when folder changes
+  }, [selectedFolderId, toast]);
 
   // Filter goals based on search query
   const filteredGoals = goals.filter(goal => {
