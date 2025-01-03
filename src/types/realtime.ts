@@ -1,5 +1,4 @@
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { Goal } from "./goals";
 
 export type GoalPayload = {
   id: number;
