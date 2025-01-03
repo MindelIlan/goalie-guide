@@ -11,11 +11,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
   global: {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
     }
-  },
-  db: {
-    schema: 'public'
   },
   realtime: {
     params: {
@@ -24,19 +22,36 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Improved health check function
+// Improved health check function with better error handling
 export const checkSupabaseHealth = async () => {
   try {
-    // Use a lightweight query that doesn't fetch actual data
-    const { count, error } = await supabase
-      .from('goals')
-      .select('*', { count: 'exact', head: true });
+    const { data, error } = await supabase.from('goals')
+      .select('count', { count: 'exact', head: true });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase health check failed:', error);
+      return false;
+    }
+    
     console.log('Supabase connection healthy');
     return true;
   } catch (error) {
     console.error('Supabase health check failed:', error);
+    return false;
+  }
+};
+
+// Add a helper function to check auth status
+export const checkAuthStatus = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Auth status check failed:', error);
+      return false;
+    }
+    return !!session;
+  } catch (error) {
+    console.error('Auth status check failed:', error);
     return false;
   }
 };
