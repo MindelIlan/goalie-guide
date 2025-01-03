@@ -7,7 +7,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: localStorage
   },
   global: {
     headers: {
@@ -25,6 +26,12 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 // Improved health check function with better error handling
 export const checkSupabaseHealth = async () => {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('No active session found');
+      return false;
+    }
+
     const { data, error } = await supabase.from('goals')
       .select('count', { count: 'exact', head: true });
       
