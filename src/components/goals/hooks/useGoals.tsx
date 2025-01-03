@@ -124,8 +124,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         },
         (payload: RealtimePostgresChangesPayload<Goal>) => {
           console.log('Goal update received:', payload);
-          // Only fetch if the change affects our current view
-          if (payload.new && 
+          if (payload.new && typeof payload.new === 'object' && 'folder_id' in payload.new &&
               (!selectedFolderId || payload.new.folder_id === selectedFolderId)) {
             fetchGoals(signal);
           }

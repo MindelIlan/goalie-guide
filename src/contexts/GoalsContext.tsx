@@ -106,10 +106,9 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
           const session = await supabase.auth.getSession();
           const userId = session.data.session?.user.id;
           
-          // Only update if the goal belongs to the current user
-          if (userId && payload.new && 
+          if (userId && payload.new && typeof payload.new === 'object' && 'user_id' in payload.new &&
               (payload.new.user_id === userId || 
-               (payload.old && payload.old.user_id === userId))) {
+               (payload.old && typeof payload.old === 'object' && 'user_id' in payload.old && payload.old.user_id === userId))) {
             fetchGoals();
           }
         }
