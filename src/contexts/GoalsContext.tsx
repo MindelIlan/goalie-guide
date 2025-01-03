@@ -106,9 +106,9 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
           const session = await supabase.auth.getSession();
           const userId = session.data.session?.user.id;
           
-          if (userId && (
-            payload.new?.user_id === userId || 
-            payload.old?.user_id === userId
+          if (userId && payload.new && (
+            payload.new.user_id === userId || 
+            (payload.old && payload.old.user_id === userId)
           )) {
             fetchGoals();
           }
