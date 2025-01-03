@@ -17,9 +17,19 @@ export const AIGoalGenerator = ({ description, userId }: AIGoalGeneratorProps) =
   const handleGenerateGoals = async () => {
     try {
       setIsGenerating(true);
+      
+      // First, get or create the Profile Goals folder
+      const { data: folderData, error: folderError } = await supabase
+        .rpc('get_or_create_profile_goals_folder', {
+          user_id_param: userId
+        });
+
+      if (folderError) throw folderError;
+
+      const folderId = folderData;
       const suggestedGoals = await generateGoalSuggestions(description);
 
-      // Insert each suggested goal into the database
+      // Insert each suggested goal into the database with the folder_id
       for (const goal of suggestedGoals) {
         const { error } = await supabase.from("goals").insert([
           {
@@ -29,6 +39,7 @@ export const AIGoalGenerator = ({ description, userId }: AIGoalGeneratorProps) =
             tags: goal.tags,
             user_id: userId,
             progress: 0,
+            folder_id: folderId // Add the folder_id here
           },
         ]);
 
@@ -40,7 +51,7 @@ export const AIGoalGenerator = ({ description, userId }: AIGoalGeneratorProps) =
 
       toast({
         title: "Goals Generated!",
-        description: `${suggestedGoals.length} goals have been created based on your profile description.`,
+        description: `${suggestedGoals.length} goals have been created in your Profile Goals folder.`,
       });
     } catch (error) {
       console.error("Error generating goals:", error);

@@ -255,7 +255,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_or_create_profile_goals_folder: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
