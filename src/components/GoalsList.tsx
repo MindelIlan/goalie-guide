@@ -24,12 +24,24 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting goal:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete goal",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
 
-      setGoals(goals.filter((goal) => goal.id !== id));
+      // Optimistically update the UI
+      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== id));
+      
       toast({
         title: "Success",
         description: "Goal deleted successfully",
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error deleting goal:', error);
@@ -37,6 +49,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         title: "Error",
         description: "Failed to delete goal",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -103,13 +116,25 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         .delete()
         .in("id", Array.from(selectedGoals));
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting goals:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete goals",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
 
-      setGoals(goals.filter((goal) => !selectedGoals.has(goal.id)));
+      // Optimistically update the UI
+      setGoals(prevGoals => prevGoals.filter(goal => !selectedGoals.has(goal.id)));
       setSelectedGoals(new Set());
+      
       toast({
         title: "Success",
         description: `${selectedGoals.size} goals deleted successfully`,
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error deleting goals:', error);
@@ -117,6 +142,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         title: "Error",
         description: "Failed to delete goals",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -139,6 +165,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
       toast({
         title: "Success",
         description: `${selectedGoals.size} goals moved successfully`,
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error moving goals:', error);
@@ -146,6 +173,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         title: "Error",
         description: "Failed to move goals",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
