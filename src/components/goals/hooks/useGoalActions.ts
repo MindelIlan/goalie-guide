@@ -1,6 +1,6 @@
 import { Goal } from "@/types/goals";
 import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface UseGoalActionsProps {
   goals: Goal[];
@@ -22,7 +22,7 @@ export const useGoalActions = ({
   };
 
   const confirmDelete = async () => {
-    const goalToDelete = goals.find(g => g.id === goals[0]?.id);
+    const goalToDelete = goals.find(g => g.id === setGoalToDelete);
     if (!goalToDelete) return;
 
     try {
