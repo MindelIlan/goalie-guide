@@ -7,6 +7,7 @@ import { Globe } from 'lucide-react';
 import { AuthForm } from './auth/AuthForm';
 import { createWelcomeNotification } from './auth/WelcomeNotification';
 import { translations } from './auth/translations';
+import { useNavigate } from 'react-router-dom';
 
 type Language = 'he' | 'en';
 
@@ -16,6 +17,7 @@ export const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState<Language>('he');
   const { toast } = useToast();
+  const navigate = useNavigate();
   const t = translations[language];
 
   const toggleLanguage = () => {
@@ -78,7 +80,7 @@ export const Auth = () => {
       }
 
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -88,6 +90,11 @@ export const Auth = () => {
           throw new Error(t.errors.invalidCredentials);
         }
         throw error;
+      }
+
+      // If sign in is successful, navigate to the home page
+      if (data.session) {
+        navigate('/');
       }
     } catch (error) {
       let message = t.errors.signInError;
