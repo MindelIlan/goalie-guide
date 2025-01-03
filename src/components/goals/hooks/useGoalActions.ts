@@ -22,21 +22,21 @@ export const useGoalActions = ({
   };
 
   const confirmDelete = async () => {
-    const goalToDelete = goals.find(g => g.id === setGoalToDelete);
-    if (!goalToDelete) return;
+    const goalId = goals.find(g => g.id === goalToDelete)?.id;
+    if (!goalId) return;
 
     try {
       const { error } = await supabase
         .from("goals")
         .delete()
-        .eq("id", goalToDelete.id);
+        .eq("id", goalId);
 
       if (error) {
         throw error;
       }
 
       // Optimistically update the UI
-      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalToDelete.id));
+      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalId));
       setGoalToDelete(null);
       
       toast({
