@@ -14,10 +14,7 @@ type DatabaseChanges = {
   };
 };
 
-interface RealtimeGoalPayload extends RealtimePostgresChangesPayload<DatabaseChanges> {
-  new: Goal | null;
-  old: Goal | null;
-}
+type RealtimeGoalPayload = RealtimePostgresChangesPayload<DatabaseChanges>;
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -157,7 +154,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on(
-        'postgres_changes',
+        'postgres_changes' as const,
         { 
           event: '*', 
           schema: 'public', 
