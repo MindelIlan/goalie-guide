@@ -4,10 +4,17 @@ import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
-// Define the type for the database change payload
-interface RealtimeGoalPayload extends RealtimePostgresChangesPayload<{
+// Define a more specific type for the payload
+type DatabaseChanges = {
   [key: string]: any;
-}> {
+  goals: {
+    id: number;
+    folder_id: number | null;
+    [key: string]: any;
+  };
+};
+
+interface RealtimeGoalPayload extends RealtimePostgresChangesPayload<DatabaseChanges> {
   new: Goal | null;
   old: Goal | null;
 }
@@ -150,7 +157,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on(
-        'postgres_changes' as const,
+        'postgres_changes',
         { 
           event: '*', 
           schema: 'public', 
