@@ -6,19 +6,11 @@ export interface Goal {
   target_date: string;
   tags: string[];
   created_at: string;
-  folder_id: number | null;
-  user_id: string;
+  folder_id?: number | null;
 }
 
-export interface SuggestedGoal {
-  title: string;
-  description: string;
-  target_date: string;
-  tags: string[];
-}
-
-export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  suggestedGoals?: SuggestedGoal[];
+export interface Folder {
+  id: number;
+  name: string;
+  description: string | null;
 }

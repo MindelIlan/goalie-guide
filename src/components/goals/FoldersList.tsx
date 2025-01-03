@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, Folder, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import { DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
-import { DroppableFolder } from "./folders/DroppableFolder";
 import { AddFolderForm } from "./folders/AddFolderForm";
+import { FolderGrid } from "./folders/FolderGrid";
+import { FolderHeader } from "./folders/FolderHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,18 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Goal {
-  id: number;
-  progress: number;
-  folder_id: number | null;
-}
-
-interface Folder {
-  id: number;
-  name: string;
-  description: string | null;
-}
+import { Goal, Folder } from "@/types/goals";
 
 interface FoldersListProps {
   folders: Folder[];
@@ -47,38 +35,7 @@ export const FoldersList = ({
   const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const { toast } = useToast();
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over) return;
-    
-    const goalId = parseInt(active.id.toString().replace('goal-', ''));
-    const folderId = over.id.toString().includes('unorganized') 
-      ? null 
-      : parseInt(over.id.toString().replace('folder-', ''));
-    
-    try {
-      const { error } = await supabase
-        .from('goals')
-        .update({ folder_id: folderId })
-        .eq('id', goalId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Goal moved to ${folderId ? 'folder' : 'unorganized goals'}`,
-      });
-    } catch (error) {
-      console.error('Error moving goal:', error);
-      toast({
-        title: "Error",
-        description: "Failed to move goal",
-        variant: "destructive",
-      });
-    }
-  };
+  const { setNodeRef: setUnorganizedRef } = useDroppable({ id: 'unorganized' });
 
   const calculateFolderStats = (folderId: number | null) => {
     const folderGoals = goals.filter(goal => goal.folder_id === folderId);
@@ -131,22 +88,17 @@ export const FoldersList = ({
     setFolderToDelete(null);
   };
 
-  const unorganizedStats = calculateFolderStats(null);
-  const { setNodeRef: setUnorganizedRef } = useDroppable({ id: 'unorganized' });
+  if (folders === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Folders</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsAddingFolder(!isAddingFolder)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Folder
-        </Button>
-      </div>
+      <FolderHeader onAddFolder={() => setIsAddingFolder(true)} />
 
       {isAddingFolder && (
         <AddFolderForm
@@ -156,49 +108,20 @@ export const FoldersList = ({
         />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        <div 
-          ref={setUnorganizedRef}
-          className={`
-            aspect-square p-4 rounded-lg transition-all duration-200
-            ${selectedFolderId === null ? 'bg-secondary/10' : 'bg-background hover:bg-secondary/5'}
-            border border-border
-          `}
-        >
-          <Button
-            variant={selectedFolderId === null ? "secondary" : "ghost"}
-            className="w-full h-full flex flex-col justify-between p-4"
-            onClick={() => onSelectFolder(null)}
-          >
-            <div className="flex items-center">
-              <Folder className="h-6 w-6 mr-2" />
-              Unorganized Goals
-            </div>
-            <div className="w-full space-y-2 mt-4">
-              <div className="flex justify-between text-sm">
-                <span>{unorganizedStats.totalGoals} goals</span>
-                <span>{unorganizedStats.averageProgress}%</span>
-              </div>
-            </div>
-          </Button>
-        </div>
+      <FolderGrid
+        folders={folders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={onSelectFolder}
+        onDeleteFolder={handleDeleteFolder}
+        goals={goals}
+        calculateFolderStats={calculateFolderStats}
+        setUnorganizedRef={setUnorganizedRef}
+      />
 
-        {folders.map((folder) => {
-          const stats = calculateFolderStats(folder.id);
-          return (
-            <DroppableFolder
-              key={folder.id}
-              folder={folder}
-              isSelected={selectedFolderId === folder.id}
-              stats={stats}
-              onSelect={() => onSelectFolder(folder.id)}
-              onDelete={() => handleDeleteFolder(folder)}
-            />
-          );
-        })}
-      </div>
-
-      <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
+      <AlertDialog 
+        open={!!folderToDelete} 
+        onOpenChange={(open) => !open && setFolderToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Folder</AlertDialogTitle>
