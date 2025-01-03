@@ -57,7 +57,7 @@ export const ProfileDescription = ({
         <p className="text-lg font-semibold mb-2">@{username}</p>
       )}
       <p className="text-gray-600 mb-4">
-        {description || "No description yet"}
+        {description || "Write a description about yourself (at least 50 words) to unlock AI-powered goal generation! Share your interests, aspirations, and what matters to you."}
       </p>
       <Button variant="outline" onClick={() => setIsEditing(true)}>
         Edit Profile

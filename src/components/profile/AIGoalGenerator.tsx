@@ -39,7 +39,7 @@ export const AIGoalGenerator = ({ description, userId }: AIGoalGeneratorProps) =
             tags: goal.tags,
             user_id: userId,
             progress: 0,
-            folder_id: folderId // Add the folder_id here
+            folder_id: folderId
           },
         ]);
 
@@ -73,7 +73,7 @@ export const AIGoalGenerator = ({ description, userId }: AIGoalGeneratorProps) =
       disabled={isGenerating}
     >
       <Sparkles className="h-4 w-4" />
-      {isGenerating ? "Generating Goals..." : "Generate AI Goals"}
+      {isGenerating ? "Generating Goals..." : "Generate Goals with AI"}
     </Button>
   );
 };
