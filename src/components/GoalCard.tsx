@@ -10,6 +10,8 @@ import { GoalButtons } from "./goal/GoalButtons";
 import { GoalTargetDate } from "./goal/GoalTargetDate";
 import { celebrateCompletion } from "./goal/GoalCelebration";
 import { useDraggable } from '@dnd-kit/core';
+import { Folder } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 interface GoalCardProps {
   goal: {
@@ -20,6 +22,7 @@ interface GoalCardProps {
     target_date: string;
     tags: string[];
     created_at: string;
+    folder_id?: number | null;
   };
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
@@ -32,11 +35,32 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [previousProgress, setPreviousProgress] = useState(goal.progress);
+  const [folderName, setFolderName] = useState<string | null>(null);
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `goal-${goal.id}`,
     data: goal,
   });
+
+  useEffect(() => {
+    const fetchFolderName = async () => {
+      if (goal.folder_id) {
+        const { data, error } = await supabase
+          .from('goal_folders')
+          .select('name')
+          .eq('id', goal.folder_id)
+          .single();
+        
+        if (!error && data) {
+          setFolderName(data.name);
+        }
+      } else {
+        setFolderName(null);
+      }
+    };
+
+    fetchFolderName();
+  }, [goal.folder_id]);
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -105,6 +129,13 @@ export const GoalCard = ({ goal, onDelete, onEdit, isDuplicate = false }: GoalCa
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {folderName && (
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+          <Folder className="h-3 w-3" />
+          <span>{folderName}</span>
+        </div>
+      )}
+      
       <GoalHeader
         title={goal.title}
         description={goal.description}
