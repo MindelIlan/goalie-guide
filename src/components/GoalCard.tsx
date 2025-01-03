@@ -10,6 +10,7 @@ import { GoalTargetDate } from "./goal/GoalTargetDate";
 import { celebrateCompletion } from "./goal/GoalCelebration";
 import { FolderBadge } from './goal/card/FolderBadge';
 import { GoalCardWrapper } from './goal/card/GoalCardWrapper';
+import { toast } from "@/components/ui/use-toast";
 
 interface GoalCardProps {
   goal: {
@@ -51,37 +52,31 @@ export const GoalCard = ({
   }, [goal.progress, previousProgress]);
 
   const updateGoalProgress = async (progress: number) => {
-    const { error } = await supabase
-      .from('goals')
-      .update({ progress })
-      .eq('id', goal.id);
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .update({ progress })
+        .eq('id', goal.id);
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error('Error updating goal progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update goal progress. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const calculateTimeProgress = () => {
-    const startDate = new Date(goal.created_at || new Date());
-    const targetDate = new Date(goal.target_date);
-    const currentDate = new Date();
-
-    if (currentDate > targetDate) return 100;
-    if (isNaN(targetDate.getTime()) || targetDate <= startDate) return goal.progress;
-
-    const totalDuration = targetDate.getTime() - startDate.getTime();
-    const elapsedDuration = currentDate.getTime() - startDate.getTime();
-    const timeProgress = Math.round((elapsedDuration / totalDuration) * 100);
-
-    return Math.min(Math.max(timeProgress, 0), 100);
-  };
-
-  const handleToggleSubgoals = () => {
+  const handleToggleSubgoals = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowSubgoals(!showSubgoals);
     if (showSimilar) setShowSimilar(false);
   };
 
-  const handleToggleSimilar = () => {
+  const handleToggleSimilar = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowSimilar(!showSimilar);
     if (showSubgoals) setShowSubgoals(false);
   };
@@ -90,6 +85,18 @@ export const GoalCard = ({
     if (onSelect) {
       onSelect(e.ctrlKey);
     }
+  };
+
+  const handleShare = async () => {
+    setShowShareDialog(true);
+  };
+
+  const handleEdit = async () => {
+    onEdit(goal.id);
+  };
+
+  const handleDelete = async () => {
+    onDelete(goal.id);
   };
 
   const timeProgress = calculateTimeProgress();
@@ -113,9 +120,9 @@ export const GoalCard = ({
         description={goal.description}
         tags={goal.tags}
         isHovered={isHovered}
-        onShare={() => setShowShareDialog(true)}
-        onEdit={() => onEdit(goal.id)}
-        onDelete={() => onDelete(goal.id)}
+        onShare={handleShare}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       
       <GoalProgress
@@ -152,4 +159,19 @@ export const GoalCard = ({
       />
     </GoalCardWrapper>
   );
+};
+
+const calculateTimeProgress = (goal: GoalCardProps['goal']) => {
+  const startDate = new Date(goal.created_at || new Date());
+  const targetDate = new Date(goal.target_date);
+  const currentDate = new Date();
+
+  if (currentDate > targetDate) return 100;
+  if (isNaN(targetDate.getTime()) || targetDate <= startDate) return goal.progress;
+
+  const totalDuration = targetDate.getTime() - startDate.getTime();
+  const elapsedDuration = currentDate.getTime() - startDate.getTime();
+  const timeProgress = Math.round((elapsedDuration / totalDuration) * 100);
+
+  return Math.min(Math.max(timeProgress, 0), 100);
 };

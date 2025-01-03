@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Share2, Trash2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface GoalHeaderProps {
   title: string;
@@ -21,6 +22,24 @@ export const GoalHeader = ({
   onEdit,
   onDelete,
 }: GoalHeaderProps) => {
+  const handleAction = async (
+    e: React.MouseEvent,
+    action: () => void | Promise<void>,
+    actionName: string
+  ) => {
+    try {
+      e.stopPropagation(); // Prevent event bubbling
+      await action();
+    } catch (error) {
+      console.error(`Error during ${actionName}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${actionName.toLowerCase()} goal. Please try again.`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex justify-between items-start mb-4">
       <div>
@@ -43,10 +62,7 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            onShare();
-          }}
+          onClick={(e) => handleAction(e, onShare, 'Share')}
         >
           <Share2 className="h-4 w-4" />
         </Button>
@@ -54,10 +70,7 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            onEdit();
-          }}
+          onClick={(e) => handleAction(e, onEdit, 'Edit')}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -65,10 +78,7 @@ export const GoalHeader = ({
           variant="ghost" 
           size="icon"
           className="hover:bg-gray-100 hover:text-red-500"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            onDelete();
-          }}
+          onClick={(e) => handleAction(e, onDelete, 'Delete')}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
