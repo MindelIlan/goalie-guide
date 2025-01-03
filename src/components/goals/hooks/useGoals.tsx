@@ -29,17 +29,25 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
 
   const fetchGoals = useCallback(async (signal?: AbortSignal) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication error: ' + sessionError.message);
+      }
+      
       if (!sessionData?.session) {
         console.log('No active session found, waiting for session...');
         return;
       }
 
+      console.log('Checking Supabase health...');
       const isHealthy = await checkSupabaseHealth();
       if (!isHealthy) {
         throw new Error('Supabase connection is not healthy');
       }
+      console.log('Supabase health check passed');
 
+      console.log('Fetching goals for user:', sessionData.session.user.id);
       let query = supabase
         .from('goals')
         .select('*')
@@ -56,9 +64,12 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
       const { data, error: fetchError } = await query;
 
       if (fetchError) {
+        console.error('Error fetching goals:', fetchError);
         throw fetchError;
       }
 
+      console.log('Goals fetched successfully:', data?.length || 0, 'goals');
+      
       // Convert bigint to number for id and folder_id
       const convertedGoals = (data || []).map(goal => ({
         ...goal,
@@ -101,8 +112,9 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         setIsReconnecting(false);
         toast({
           title: "Connection Error",
-          description: "Please refresh the page to try again",
+          description: "Unable to connect to the server. Please check your internet connection and refresh the page.",
           variant: "destructive",
+          duration: 5000,
         });
       }
     }
