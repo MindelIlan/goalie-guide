@@ -116,7 +116,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on<Goal>(
-        'postgres_changes' as 'system',
+        'postgres_changes',
         { 
           event: '*', 
           schema: 'public', 
@@ -125,17 +125,13 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
         (payload: RealtimePostgresChangesPayload<Goal>) => {
           console.log('Goal update received:', payload);
           // Only fetch if the change affects our current view
-          if (
-            !selectedFolderId || 
-            (payload.new && payload.new.folder_id === selectedFolderId)
-          ) {
+          if (payload.new && 
+              (!selectedFolderId || payload.new.folder_id === selectedFolderId)) {
             fetchGoals(signal);
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       console.log('Cleaning up goals hook...');

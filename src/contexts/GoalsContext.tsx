@@ -94,7 +94,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on<Goal>(
-        'postgres_changes' as 'system',
+        'postgres_changes',
         { 
           event: '*', 
           schema: 'public', 
@@ -106,10 +106,10 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
           const session = await supabase.auth.getSession();
           const userId = session.data.session?.user.id;
           
-          if (userId && payload.new && (
-            payload.new.user_id === userId || 
-            (payload.old && payload.old.user_id === userId)
-          )) {
+          // Only update if the goal belongs to the current user
+          if (userId && payload.new && 
+              (payload.new.user_id === userId || 
+               (payload.old && payload.old.user_id === userId))) {
             fetchGoals();
           }
         }
