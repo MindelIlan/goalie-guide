@@ -58,12 +58,21 @@ export const FoldersList = ({
 
   const deleteFolder = async (folderId: number) => {
     try {
-      const { error } = await supabase
+      // First, update all goals in this folder to have no folder (unorganized)
+      const { error: updateError } = await supabase
+        .from('goals')
+        .update({ folder_id: null })
+        .eq('folder_id', folderId);
+
+      if (updateError) throw updateError;
+
+      // Then delete the folder
+      const { error: deleteError } = await supabase
         .from('goal_folders')
         .delete()
         .eq('id', folderId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
       if (onFoldersChange) {
         onFoldersChange(folders.filter(f => f.id !== folderId));
