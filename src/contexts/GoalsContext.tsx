@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase';
 import { Goal } from '@/types/goals';
 import { useToast } from '@/hooks/use-toast';
 import { checkSupabaseHealth } from '@/lib/supabase';
-import { RealtimeGoalPayload } from '@/types/realtime';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface GoalsContextType {
@@ -95,7 +94,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on<Goal>(
-        'postgres_changes',
+        'postgres_changes' as 'system',
         { 
           event: '*', 
           schema: 'public', 

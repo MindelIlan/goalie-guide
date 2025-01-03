@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
-import { RealtimeGoalPayload } from "@/types/realtime";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
@@ -117,7 +116,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on<Goal>(
-        'postgres_changes',
+        'postgres_changes' as 'system',
         { 
           event: '*', 
           schema: 'public', 
