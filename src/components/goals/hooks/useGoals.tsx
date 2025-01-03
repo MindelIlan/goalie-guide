@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
 import { RealtimeGoalPayload } from "@/types/realtime";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -115,14 +116,14 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
 
     const goalsSubscription = supabase
       .channel('goals_channel')
-      .on(
-        'postgres_changes' as const,
+      .on<Goal>(
+        'postgres_changes',
         { 
           event: '*', 
           schema: 'public', 
           table: 'goals',
         },
-        (payload: RealtimeGoalPayload) => {
+        (payload: RealtimePostgresChangesPayload<Goal>) => {
           console.log('Goal update received:', payload);
           // Only fetch if the change affects our current view
           if (

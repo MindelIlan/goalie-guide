@@ -4,6 +4,7 @@ import { Goal } from '@/types/goals';
 import { useToast } from '@/hooks/use-toast';
 import { checkSupabaseHealth } from '@/lib/supabase';
 import { RealtimeGoalPayload } from '@/types/realtime';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface GoalsContextType {
   goals: Goal[];
@@ -93,14 +94,14 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const goalsSubscription = supabase
       .channel('goals_channel')
-      .on(
-        'postgres_changes' as const,
+      .on<Goal>(
+        'postgres_changes',
         { 
           event: '*', 
           schema: 'public', 
           table: 'goals',
         },
-        async (payload: RealtimeGoalPayload) => {
+        async (payload: RealtimePostgresChangesPayload<Goal>) => {
           console.log('Goal update received:', payload);
           
           const session = await supabase.auth.getSession();
