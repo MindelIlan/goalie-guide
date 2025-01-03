@@ -41,6 +41,13 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
     }
   };
 
+  const handleEditClick = (id: number) => {
+    const goalToEdit = goals.find(g => g.id === id);
+    if (goalToEdit) {
+      setEditingGoal(goalToEdit);
+    }
+  };
+
   return (
     <div>
       <BulkActions
@@ -52,7 +59,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
       <GoalsListContent
         goals={goals}
         onDelete={handleDeleteGoal}
-        onEdit={setEditingGoal}
+        onEdit={handleEditClick}
         duplicateGoals={duplicateGoals}
         selectedGoals={selectedGoals}
         onSelect={handleGoalSelect}
