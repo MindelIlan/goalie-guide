@@ -65,7 +65,6 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Initial fetch on mount and auth state change
   useEffect(() => {
     const abortController = new AbortController();
     
@@ -91,7 +90,6 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Subscribe to real-time changes
   useEffect(() => {
     const goalsSubscription = supabase
       .channel('goals_channel')
