@@ -2,19 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, checkSupabaseHealth } from "@/lib/supabase";
 import { Goal } from "@/types/goals";
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
-// Define a more specific type for the payload
-type DatabaseChanges = {
-  [key: string]: any;
-  goals: {
-    id: number;
-    folder_id: number | null;
-    [key: string]: any;
-  };
-};
-
-type RealtimeGoalPayload = RealtimePostgresChangesPayload<DatabaseChanges>;
+import { RealtimeGoalPayload } from "@/types/realtime";
 
 export const useGoals = (selectedFolderId: number | null, searchQuery: string) => {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -26,9 +14,8 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
   const maxRetries = 5;
-  const baseDelay = 2000; // 2 seconds
+  const baseDelay = 2000;
 
-  // Cleanup function
   const cleanup = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -43,24 +30,16 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
   const fetchGoals = useCallback(async (signal?: AbortSignal) => {
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Authentication error: ' + sessionError.message);
-      }
+      if (sessionError) throw sessionError;
       
       if (!sessionData?.session) {
-        console.log('No active session found, waiting for session...');
+        console.log('No active session found');
         return;
       }
 
-      console.log('Checking Supabase health...');
       const isHealthy = await checkSupabaseHealth();
-      if (!isHealthy) {
-        throw new Error('Supabase connection is not healthy');
-      }
-      console.log('Supabase health check passed');
+      if (!isHealthy) throw new Error('Supabase connection is not healthy');
 
-      console.log('Fetching goals for user:', sessionData.session.user.id);
       let query = supabase
         .from('goals')
         .select('*')
@@ -75,32 +54,16 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
       }
 
       const { data, error: fetchError } = await query;
+      if (fetchError) throw fetchError;
 
-      if (fetchError) {
-        console.error('Error fetching goals:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('Goals fetched successfully:', data?.length || 0, 'goals');
-      
-      // Convert bigint to number for id and folder_id
-      const convertedGoals = (data || []).map(goal => ({
-        ...goal,
-        id: Number(goal.id),
-        folder_id: goal.folder_id ? Number(goal.folder_id) : null
-      }));
-
-      setGoals(convertedGoals);
+      setGoals(data || []);
       setError(null);
       retryCountRef.current = 0;
       setIsReconnecting(false);
 
     } catch (err) {
-      if (signal?.aborted) {
-        console.log('Fetch aborted');
-        return;
-      }
-
+      if (signal?.aborted) return;
+      
       console.error('Error in fetchGoals:', err);
       setError(err as Error);
 
@@ -150,7 +113,6 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
 
     initFetch();
 
-    // Subscribe to specific events instead of all changes
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on(
@@ -159,10 +121,9 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
           event: '*', 
           schema: 'public', 
           table: 'goals',
-          filter: `user_id=eq.${supabase.auth.getUser()}`
         },
         (payload: RealtimeGoalPayload) => {
-          console.log('Specific goal update received:', payload);
+          console.log('Goal update received:', payload);
           // Only fetch if the change affects our current view
           if (
             !selectedFolderId || 
@@ -179,14 +140,7 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
     return () => {
       console.log('Cleaning up goals hook...');
       isMounted = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
+      cleanup();
       goalsSubscription.unsubscribe();
     };
   }, [fetchGoals]);

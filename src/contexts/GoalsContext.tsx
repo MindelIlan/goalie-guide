@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Goal } from '@/types/goals';
 import { useToast } from '@/hooks/use-toast';
 import { checkSupabaseHealth } from '@/lib/supabase';
+import { RealtimeGoalPayload } from '@/types/realtime';
 
 interface GoalsContextType {
   goals: Goal[];
@@ -101,7 +102,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
           schema: 'public', 
           table: 'goals',
         },
-        async (payload) => {
+        async (payload: RealtimeGoalPayload) => {
           console.log('Goal update received:', payload);
           // Only fetch if the change affects our current user's goals
           const session = await supabase.auth.getSession();
