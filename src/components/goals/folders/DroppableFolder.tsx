@@ -16,7 +16,8 @@ import {
   Code,
   Dumbbell,
   Brain,
-  GraduationCap
+  GraduationCap,
+  Trash2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
@@ -34,6 +35,7 @@ interface DroppableFolderProps {
   isSelected: boolean;
   stats: FolderStats;
   onSelect: () => void;
+  onDelete: () => void;
   isOver?: boolean;
 }
 
@@ -61,6 +63,7 @@ export const DroppableFolder = ({
   isSelected, 
   stats, 
   onSelect,
+  onDelete,
   isOver 
 }: DroppableFolderProps) => {
   const { setNodeRef } = useDroppable({
@@ -80,9 +83,11 @@ export const DroppableFolder = ({
       }}
       transition={{ duration: 0.2 }}
       className={`
+        group
         aspect-square p-4 rounded-lg transition-all duration-200
         ${isSelected ? 'bg-secondary/10' : 'bg-background hover:bg-secondary/5'}
         ${isOver ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : 'border border-border'}
+        relative
       `}
     >
       <Button
@@ -117,6 +122,18 @@ export const DroppableFolder = ({
             className="absolute inset-0 bg-primary"
           />
         )}
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+      >
+        <Trash2 className="h-4 w-4" />
       </Button>
     </motion.div>
   );

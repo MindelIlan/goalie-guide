@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Folder } from "lucide-react";
+import { Plus, Folder, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { DroppableFolder } from "./folders/DroppableFolder";
 import { AddFolderForm } from "./folders/AddFolderForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Goal {
   id: number;
@@ -35,6 +45,7 @@ export const FoldersList = ({
   goals
 }: FoldersListProps) => {
   const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const { toast } = useToast();
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -75,6 +86,49 @@ export const FoldersList = ({
     const totalProgress = folderGoals.reduce((sum, goal) => sum + (goal.progress || 0), 0);
     const averageProgress = totalGoals > 0 ? Math.round(totalProgress / totalGoals) : 0;
     return { totalGoals, averageProgress };
+  };
+
+  const handleDeleteFolder = async (folder: Folder) => {
+    const folderGoals = goals.filter(goal => goal.folder_id === folder.id);
+    
+    if (folderGoals.length > 0) {
+      setFolderToDelete(folder);
+      return;
+    }
+
+    await deleteFolder(folder.id);
+  };
+
+  const deleteFolder = async (folderId: number) => {
+    try {
+      const { error } = await supabase
+        .from('goal_folders')
+        .delete()
+        .eq('id', folderId);
+
+      if (error) throw error;
+
+      if (onFoldersChange) {
+        onFoldersChange(folders.filter(f => f.id !== folderId));
+      }
+
+      if (selectedFolderId === folderId) {
+        onSelectFolder(null);
+      }
+
+      toast({
+        title: "Success",
+        description: "Folder deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete folder",
+        variant: "destructive",
+      });
+    }
+    setFolderToDelete(null);
   };
 
   const unorganizedStats = calculateFolderStats(null);
@@ -138,10 +192,28 @@ export const FoldersList = ({
               isSelected={selectedFolderId === folder.id}
               stats={stats}
               onSelect={() => onSelectFolder(folder.id)}
+              onDelete={() => handleDeleteFolder(folder)}
             />
           );
         })}
       </div>
+
+      <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Folder</AlertDialogTitle>
+            <AlertDialogDescription>
+              This folder contains goals. Are you sure you want to delete it? The goals will be moved to "Unorganized Goals".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => folderToDelete && deleteFolder(folderToDelete.id)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
