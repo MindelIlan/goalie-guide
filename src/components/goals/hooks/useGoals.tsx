@@ -137,13 +137,23 @@ export const useGoals = (selectedFolderId: number | null, searchQuery: string) =
 
     initFetch();
 
+    // Subscribe to specific events instead of all changes
     const goalsSubscription = supabase
       .channel('goals_channel')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'goals' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'goals',
+          filter: `user_id=eq.${supabase.auth.getUser()}`
+        },
         (payload) => {
-          console.log('Real-time update received:', payload);
-          if (isMounted) {
+          console.log('Specific goal update received:', payload);
+          // Only fetch if the change affects our current view
+          if (
+            !selectedFolderId || 
+            (payload.new && payload.new.folder_id === selectedFolderId)
+          ) {
             fetchGoals(signal);
           }
         }
