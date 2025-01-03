@@ -8,9 +8,9 @@ interface GoalHeaderProps {
   description: string;
   tags: string[];
   isHovered: boolean;
-  onShare: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onShare: (e: React.MouseEvent) => void;
+  onEdit: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
 }
 
 export const GoalHeader = ({
@@ -24,12 +24,11 @@ export const GoalHeader = ({
 }: GoalHeaderProps) => {
   const handleAction = async (
     e: React.MouseEvent,
-    action: () => void | Promise<void>,
+    action: (e: React.MouseEvent) => void,
     actionName: string
   ) => {
     try {
-      e.stopPropagation(); // Prevent event bubbling
-      await action();
+      action(e);
     } catch (error) {
       console.error(`Error during ${actionName}:`, error);
       toast({
