@@ -8,6 +8,7 @@ import { User } from "@supabase/supabase-js";
 import { GoalsContainer } from "@/components/goals/GoalsContainer";
 import { AIAssistant } from "@/components/AIAssistant";
 import { GoalsProvider } from "@/contexts/GoalsContext";
+import { WelcomeTour } from "@/components/tour/WelcomeTour";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -82,6 +83,7 @@ const Index = () => {
           </div>
 
           <AIAssistant />
+          <WelcomeTour />
         </div>
       </GoalsProvider>
     </NotificationsProvider>
