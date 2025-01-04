@@ -37,17 +37,9 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     }
 
     setIsUploading(true);
-    toast({
-      title: "Uploading...",
-      description: "Your profile picture is being uploaded",
-    });
-
+    
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
-
-      // Delete old files for this user
+      // First, delete any existing files
       const { data: oldFiles } = await supabase.storage
         .from("profile_images")
         .list(userId);
@@ -63,19 +55,22 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       }
 
       // Upload new file
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type,
-        });
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
         .getPublicUrl(filePath);
 
+      // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
@@ -84,6 +79,7 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       if (updateError) throw updateError;
 
       onUploadComplete(publicUrl);
+      
       toast({
         title: "Success",
         description: "Profile picture updated successfully",
@@ -92,7 +88,7 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to upload image",
+        description: "Failed to upload image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -122,7 +118,6 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
         onChange={handleFileChange}
         className="hidden"
         disabled={isUploading}
-        data-testid="avatar-upload-input"
       />
     </label>
   );

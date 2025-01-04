@@ -14,18 +14,22 @@ export const GoalButtons = ({
   onToggleSubgoals,
   onToggleSimilar,
 }: GoalButtonsProps) => {
-  const handleButtonClick = (e: React.MouseEvent, callback: () => void) => {
-    e.preventDefault();
-    e.stopPropagation();
-    callback();
-  };
-
   return (
-    <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="flex gap-2 mt-4" 
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
       <Button
         variant="outline"
         size="sm"
-        onClick={(e) => handleButtonClick(e, onToggleSubgoals)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleSubgoals();
+        }}
         className={showSubgoals ? "bg-gray-100" : ""}
       >
         <ListTodo className="h-4 w-4 mr-2" />
@@ -34,7 +38,11 @@ export const GoalButtons = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={(e) => handleButtonClick(e, onToggleSimilar)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleSimilar();
+        }}
         className={showSimilar ? "bg-gray-100" : ""}
       >
         <Share2 className="h-4 w-4 mr-2" />
