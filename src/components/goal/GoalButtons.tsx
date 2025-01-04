@@ -4,8 +4,8 @@ import { ListTodo, Share2 } from "lucide-react";
 interface GoalButtonsProps {
   showSubgoals: boolean;
   showSimilar: boolean;
-  onToggleSubgoals: (e: React.MouseEvent) => void;
-  onToggleSimilar: (e: React.MouseEvent) => void;
+  onToggleSubgoals: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onToggleSimilar: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const GoalButtons = ({
