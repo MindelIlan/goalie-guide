@@ -13,7 +13,7 @@ vi.mock("@/lib/supabase", () => ({
         upload: vi.fn(() => Promise.resolve({ error: null })),
         remove: vi.fn(() => Promise.resolve({ error: null })),
         getPublicUrl: vi.fn(() => ({ data: { publicUrl: "test-url.jpg" } })),
-        // Add missing StorageFileApi properties
+        // Add all required StorageFileApi properties
         url: "test-url",
         headers: {},
         fetch: vi.fn(),
@@ -25,6 +25,14 @@ vi.mock("@/lib/supabase", () => ({
         download: vi.fn(),
         getPublicUrls: vi.fn(),
         update: vi.fn(),
+        uploadToSignedUrl: vi.fn(),
+        createSignedUploadUrl: vi.fn(),
+        info: vi.fn(),
+        exists: vi.fn(),
+        remove: vi.fn(),
+        list: vi.fn(),
+        upload: vi.fn(),
+        listBuckets: vi.fn(),
       })),
     },
     from: vi.fn(() => ({
@@ -107,7 +115,7 @@ describe("AvatarUploader", () => {
       upload: vi.fn(),
       remove: vi.fn(),
       getPublicUrl: vi.fn(),
-      // Add missing StorageFileApi properties
+      // Add all required StorageFileApi properties
       url: "test-url",
       headers: {},
       fetch: vi.fn(),
@@ -119,6 +127,14 @@ describe("AvatarUploader", () => {
       download: vi.fn(),
       getPublicUrls: vi.fn(),
       update: vi.fn(),
+      uploadToSignedUrl: vi.fn(),
+      createSignedUploadUrl: vi.fn(),
+      info: vi.fn(),
+      exists: vi.fn(),
+      remove: vi.fn(),
+      list: vi.fn(),
+      upload: vi.fn(),
+      listBuckets: vi.fn(),
     }));
 
     render(
