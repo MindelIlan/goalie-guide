@@ -11,7 +11,11 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
   return (
     <div className="relative inline-block">
       <Avatar className="h-24 w-24">
-        <AvatarImage src={avatarUrl || ""} alt="Profile picture" />
+        <AvatarImage 
+          src={avatarUrl || ""} 
+          alt="Profile picture"
+          className="object-cover"
+        />
         <AvatarFallback>
           {userId.slice(0, 2).toUpperCase()}
         </AvatarFallback>

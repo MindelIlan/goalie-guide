@@ -4,8 +4,8 @@ import { ListTodo, Share2 } from "lucide-react";
 interface GoalButtonsProps {
   showSubgoals: boolean;
   showSimilar: boolean;
-  onToggleSubgoals: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  onToggleSimilar: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onToggleSubgoals: () => void;
+  onToggleSimilar: () => void;
 }
 
 export const GoalButtons = ({
@@ -19,7 +19,10 @@ export const GoalButtons = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={onToggleSubgoals}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSubgoals();
+        }}
         className={showSubgoals ? "bg-gray-100" : ""}
       >
         <ListTodo className="h-4 w-4 mr-2" />
@@ -28,7 +31,10 @@ export const GoalButtons = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={onToggleSimilar}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSimilar();
+        }}
         className={showSimilar ? "bg-gray-100" : ""}
       >
         <Share2 className="h-4 w-4 mr-2" />
