@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase", () => ({
         remove: vi.fn(() => Promise.resolve({ error: null })),
         getPublicUrl: vi.fn(() => ({ data: { publicUrl: "test-url.jpg" } })),
         // Add missing StorageFileApi properties
-        url: vi.fn(),
+        url: "test-url",
         headers: {},
         fetch: vi.fn(),
         uploadOrUpdate: vi.fn(),
@@ -108,7 +108,7 @@ describe("AvatarUploader", () => {
       remove: vi.fn(),
       getPublicUrl: vi.fn(),
       // Add missing StorageFileApi properties
-      url: vi.fn(),
+      url: "test-url",
       headers: {},
       fetch: vi.fn(),
       uploadOrUpdate: vi.fn(),
