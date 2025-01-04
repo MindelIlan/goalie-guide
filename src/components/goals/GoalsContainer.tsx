@@ -40,6 +40,8 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
     checkForDuplicates
   } = useDuplicateGoals(allGoals);
 
+  const selectedFolder = folders.find(f => f.id === selectedFolderId);
+
   useEffect(() => {
     // Subscribe to real-time changes
     const channel = supabase
@@ -131,6 +133,7 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
           goals={goals} 
           setGoals={refreshGoals}
           duplicateGoals={duplicateGoalIds}
+          folderName={selectedFolder?.name}
         />
       </DndContext>
 

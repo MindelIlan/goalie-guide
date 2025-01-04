@@ -12,9 +12,10 @@ interface GoalsListProps {
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   duplicateGoals?: Set<number>;
+  folderName?: string | null;
 }
 
-export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: GoalsListProps) => {
+export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set(), folderName }: GoalsListProps) => {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [selectedGoals, setSelectedGoals] = useState<Set<number>>(new Set());
   const [goalToDelete, setGoalToDelete] = useState<number | null>(null);
@@ -64,6 +65,7 @@ export const GoalsList = ({ goals, setGoals, duplicateGoals = new Set() }: Goals
         duplicateGoals={duplicateGoals}
         selectedGoals={selectedGoals}
         onSelect={handleGoalSelect}
+        folderName={folderName}
       />
 
       {editingGoal && (

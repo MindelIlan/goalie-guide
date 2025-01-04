@@ -9,6 +9,7 @@ interface GoalsListContentProps {
   duplicateGoals?: Set<number>;
   selectedGoals: Set<number>;
   onSelect: (id: number, ctrlKey: boolean) => void;
+  folderName?: string | null;
 }
 
 export const GoalsListContent = ({
@@ -18,6 +19,7 @@ export const GoalsListContent = ({
   duplicateGoals = new Set(),
   selectedGoals,
   onSelect,
+  folderName,
 }: GoalsListContentProps) => {
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -33,7 +35,7 @@ export const GoalsListContent = ({
           onSelect={onSelect}
         />
       ))}
-      {goals.length === 0 && <EmptyGoalsList />}
+      {goals.length === 0 && <EmptyGoalsList folderName={folderName} />}
     </div>
   );
 };
