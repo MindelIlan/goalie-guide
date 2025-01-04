@@ -16,6 +16,17 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Error",
+        description: "Please upload a valid image file (JPEG, PNG, GIF, or WEBP)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -33,8 +44,25 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
 
     try {
       const fileExt = file.name.split(".").pop();
-      const filePath = `${userId}/${Math.random()}.${fileExt}`;
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
 
+      // Delete old files for this user
+      const { data: oldFiles } = await supabase.storage
+        .from("profile_images")
+        .list(userId);
+
+      if (oldFiles?.length) {
+        await Promise.all(
+          oldFiles.map((oldFile) =>
+            supabase.storage
+              .from("profile_images")
+              .remove([`${userId}/${oldFile.name}`])
+          )
+        );
+      }
+
+      // Upload new file
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
@@ -69,6 +97,9 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       });
     } finally {
       setIsUploading(false);
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 

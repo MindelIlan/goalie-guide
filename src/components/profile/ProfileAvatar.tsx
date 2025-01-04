@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarUploader } from "./avatar/AvatarUploader";
+import { useState } from "react";
 
 interface ProfileAvatarProps {
   userId: string;
@@ -8,13 +9,16 @@ interface ProfileAvatarProps {
 }
 
 export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvatarProps) => {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="relative inline-block">
       <Avatar className="h-24 w-24">
         <AvatarImage 
-          src={avatarUrl || ""} 
+          src={!imageError ? (avatarUrl || "") : ""}
           alt="Profile picture"
           className="object-cover"
+          onError={() => setImageError(true)}
         />
         <AvatarFallback>
           {userId.slice(0, 2).toUpperCase()}
@@ -22,7 +26,10 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
       </Avatar>
       <AvatarUploader 
         userId={userId}
-        onUploadComplete={(url) => onAvatarChange?.(url)}
+        onUploadComplete={(url) => {
+          setImageError(false);
+          onAvatarChange?.(url);
+        }}
       />
     </div>
   );
