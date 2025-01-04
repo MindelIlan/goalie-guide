@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ProfileAvatar } from "./profile/ProfileAvatar";
 import { ProfileDescription } from "./profile/ProfileDescription";
 import { ProfileProgress } from "./profile/ProfileProgress";
 import { ProfileData } from "./profile/ProfileData";
 import { AIGoalGenerator } from "./profile/AIGoalGenerator";
+import { supabase } from "@/lib/supabase";
 
 interface ProfileData {
   avatar_url: string | null;
@@ -21,11 +22,39 @@ export const Profile = ({ userId }: { userId: string }) => {
     username: null
   });
 
+  useEffect(() => {
+    // Subscribe to realtime profile changes
+    const channel = supabase
+      .channel('profile_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Profile update received:', payload);
+          if (payload.new) {
+            setProfile(prev => ({ ...prev, ...payload.new }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const handleAvatarUpdate = (url: string) => {
+    console.log('Avatar update:', url);
     setProfile(prev => ({ ...prev, avatar_url: url }));
   };
 
   const handleDescriptionUpdate = (description: string, username: string) => {
+    console.log('Description update:', { description, username });
     setProfile(prev => ({ ...prev, description, username }));
   };
 
