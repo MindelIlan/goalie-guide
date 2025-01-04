@@ -16,8 +16,6 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("Starting file upload process");
-
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
@@ -29,7 +27,6 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       return;
     }
 
-    // Validate file size (2MB limit)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -40,9 +37,17 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     }
 
     setIsUploading(true);
-    
+    toast({
+      title: "Uploading...",
+      description: "Your profile picture is being uploaded",
+    });
+
     try {
-      // Delete existing files
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+
+      // Delete old files for this user
       const { data: oldFiles } = await supabase.storage
         .from("profile_images")
         .list(userId);
@@ -58,26 +63,19 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       }
 
       // Upload new file
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${userId}/${timestamp}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
-          cacheControl: 'no-cache',
           upsert: true,
-          contentType: file.type
+          contentType: file.type,
         });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
         .getPublicUrl(filePath);
 
-      // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
@@ -86,16 +84,15 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       if (updateError) throw updateError;
 
       onUploadComplete(publicUrl);
-      
       toast({
         title: "Success",
         description: "Profile picture updated successfully",
       });
     } catch (error) {
-      console.error("Error in upload process:", error);
+      console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: "Failed to upload image. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload image",
         variant: "destructive",
       });
     } finally {

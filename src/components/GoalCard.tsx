@@ -43,44 +43,13 @@ export const GoalCard = ({
   const [showSubgoals, setShowSubgoals] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [previousProgress, setPreviousProgress] = useState(goal.progress);
-  const [localGoal, setLocalGoal] = useState(goal);
 
   useEffect(() => {
-    setLocalGoal(goal);
-  }, [goal]);
-
-  useEffect(() => {
-    if (previousProgress < 100 && localGoal.progress === 100) {
+    if (previousProgress < 100 && goal.progress === 100) {
       celebrateCompletion();
     }
-    setPreviousProgress(localGoal.progress);
-  }, [localGoal.progress, previousProgress]);
-
-  useEffect(() => {
-    // Subscribe to realtime goal updates
-    const channel = supabase
-      .channel(`goal_${goal.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'goals',
-          filter: `id=eq.${goal.id}`
-        },
-        (payload) => {
-          console.log('Goal update received:', payload);
-          if (payload.new) {
-            setLocalGoal(payload.new as typeof goal);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [goal.id]);
+    setPreviousProgress(goal.progress);
+  }, [goal.progress, previousProgress]);
 
   const updateGoalProgress = async (progress: number) => {
     try {
@@ -90,8 +59,6 @@ export const GoalCard = ({
         .eq('id', goal.id);
 
       if (error) throw error;
-      
-      setLocalGoal(prev => ({ ...prev, progress }));
     } catch (error) {
       console.error('Error updating goal progress:', error);
       toast({
@@ -103,13 +70,11 @@ export const GoalCard = ({
   };
 
   const handleToggleSubgoals = () => {
-    console.log('Toggling subgoals');
     setShowSubgoals(!showSubgoals);
     if (showSimilar) setShowSimilar(false);
   };
 
   const handleToggleSimilar = () => {
-    console.log('Toggling similar goals');
     setShowSimilar(!showSimilar);
     if (showSubgoals) setShowSubgoals(false);
   };
@@ -135,13 +100,13 @@ export const GoalCard = ({
     onDelete(goal.id);
   };
 
-  const timeProgress = calculateTimeProgress(localGoal);
-  const isCompleted = localGoal.progress === 100;
+  const timeProgress = calculateTimeProgress(goal);
+  const isCompleted = goal.progress === 100;
 
   return (
     <GoalCardWrapper
-      goalId={localGoal.id}
-      goalData={localGoal}
+      goalId={goal.id}
+      goalData={goal}
       isCompleted={isCompleted}
       isDuplicate={isDuplicate}
       isSelected={isSelected}
@@ -149,12 +114,12 @@ export const GoalCard = ({
       onHoverChange={setIsHovered}
       onClick={handleClick}
     >
-      <FolderBadge folderId={localGoal.folder_id} />
+      <FolderBadge folderId={goal.folder_id} />
       
       <GoalHeader
-        title={localGoal.title}
-        description={localGoal.description}
-        tags={localGoal.tags}
+        title={goal.title}
+        description={goal.description}
+        tags={goal.tags}
         isHovered={isHovered}
         onShare={handleShare}
         onEdit={handleEdit}
@@ -162,11 +127,11 @@ export const GoalCard = ({
       />
       
       <GoalProgress
-        taskProgress={localGoal.progress}
+        taskProgress={goal.progress}
         timeProgress={timeProgress}
       />
       
-      <GoalTargetDate targetDate={localGoal.target_date} />
+      <GoalTargetDate targetDate={goal.target_date} />
 
       <GoalButtons
         showSubgoals={showSubgoals}
@@ -177,19 +142,19 @@ export const GoalCard = ({
 
       {showSubgoals && (
         <div className="mt-4 border-t pt-4">
-          <SubgoalsList goalId={localGoal.id} onProgressUpdate={updateGoalProgress} />
+          <SubgoalsList goalId={goal.id} onProgressUpdate={updateGoalProgress} />
         </div>
       )}
 
       {showSimilar && (
         <div className="mt-4 border-t pt-4">
-          <SimilarGoals goalTitle={localGoal.title} />
+          <SimilarGoals goalTitle={goal.title} />
         </div>
       )}
 
       <ShareGoalDialog
-        goalId={localGoal.id}
-        goalTitle={localGoal.title}
+        goalId={goal.id}
+        goalTitle={goal.title}
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
       />
