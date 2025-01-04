@@ -69,12 +69,14 @@ export const GoalCard = ({
     }
   };
 
-  const handleToggleSubgoals = () => {
+  const handleToggleSubgoals = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowSubgoals(!showSubgoals);
     if (showSimilar) setShowSimilar(false);
   };
 
-  const handleToggleSimilar = () => {
+  const handleToggleSimilar = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowSimilar(!showSimilar);
     if (showSubgoals) setShowSubgoals(false);
   };
