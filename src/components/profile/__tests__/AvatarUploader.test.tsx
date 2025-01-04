@@ -8,7 +8,9 @@ vi.mock("@/lib/supabase", () => ({
   supabase: {
     storage: {
       from: vi.fn(() => ({
+        list: vi.fn(() => Promise.resolve({ data: [], error: null })),
         upload: vi.fn(() => Promise.resolve({ error: null })),
+        remove: vi.fn(() => Promise.resolve({ error: null })),
         getPublicUrl: vi.fn(() => ({ data: { publicUrl: "test-url.jpg" } })),
       })),
     },
@@ -46,7 +48,25 @@ describe("AvatarUploader", () => {
     });
   });
 
-  it("shows error for large files", async () => {
+  it("validates file type", async () => {
+    render(
+      <AvatarUploader 
+        userId={mockUserId} 
+        onUploadComplete={mockOnUploadComplete}
+      />
+    );
+
+    const invalidFile = new File(["test"], "test.txt", { type: "text/plain" });
+    const input = screen.getByTestId("avatar-upload-input");
+
+    fireEvent.change(input, { target: { files: [invalidFile] } });
+
+    await waitFor(() => {
+      expect(mockOnUploadComplete).not.toHaveBeenCalled();
+    });
+  });
+
+  it("validates file size", async () => {
     render(
       <AvatarUploader 
         userId={mockUserId} 
@@ -58,6 +78,32 @@ describe("AvatarUploader", () => {
     const input = screen.getByTestId("avatar-upload-input");
 
     fireEvent.change(input, { target: { files: [largeFile] } });
+
+    await waitFor(() => {
+      expect(mockOnUploadComplete).not.toHaveBeenCalled();
+    });
+  });
+
+  it("handles storage errors gracefully", async () => {
+    // Mock storage error
+    vi.mocked(supabase.storage.from).mockImplementationOnce(() => ({
+      list: vi.fn(() => Promise.resolve({ data: null, error: new Error("Storage error") })),
+      upload: vi.fn(),
+      remove: vi.fn(),
+      getPublicUrl: vi.fn(),
+    }));
+
+    render(
+      <AvatarUploader 
+        userId={mockUserId} 
+        onUploadComplete={mockOnUploadComplete}
+      />
+    );
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = screen.getByTestId("avatar-upload-input");
+
+    fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
       expect(mockOnUploadComplete).not.toHaveBeenCalled();
