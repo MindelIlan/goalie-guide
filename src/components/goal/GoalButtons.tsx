@@ -38,7 +38,7 @@ export const GoalButtons = ({
         className={showSimilar ? "bg-gray-100" : ""}
       >
         <Share2 className="h-4 w-4 mr-2" />
-        Similar Goals
+        Partner up
       </Button>
     </div>
   );
