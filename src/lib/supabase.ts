@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Check if environment variables are defined
-const supabaseUrl = 'https://olxbhfzyjrfxzyggdvng.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9seGJoZnp5anJmeHp5Z2dkdm5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY4OTQxNjAsImV4cCI6MjAyMjQ3MDE2MH0.2eX5WnxqMUlkLcvkTRqpZHMxk8XsQd_U-xtAiLGCBhY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
