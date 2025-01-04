@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, vi, beforeEach, expect } from "vitest";
 import { AvatarUploader } from "../avatar/AvatarUploader";
 import { supabase } from "@/lib/supabase";
+import { StorageError } from "@supabase/storage-js";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase", () => ({
@@ -85,9 +86,13 @@ describe("AvatarUploader", () => {
   });
 
   it("handles storage errors gracefully", async () => {
+    // Create a proper StorageError
+    const storageError = new Error("Storage error") as StorageError;
+    storageError.__isStorageError = true;
+
     // Mock storage error
     vi.mocked(supabase.storage.from).mockImplementationOnce(() => ({
-      list: vi.fn(() => Promise.resolve({ data: null, error: new Error("Storage error") })),
+      list: vi.fn(() => Promise.resolve({ data: null, error: storageError })),
       upload: vi.fn(),
       remove: vi.fn(),
       getPublicUrl: vi.fn(),
