@@ -123,6 +123,7 @@ export type Database = {
           created_at: string
           description: string | null
           email: string | null
+          has_completed_tour: boolean | null
           id: string
           openai_api_key: string | null
           username: string | null
@@ -132,6 +133,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          has_completed_tour?: boolean | null
           id: string
           openai_api_key?: string | null
           username?: string | null
@@ -141,6 +143,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          has_completed_tour?: boolean | null
           id?: string
           openai_api_key?: string | null
           username?: string | null

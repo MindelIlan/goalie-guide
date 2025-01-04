@@ -46,7 +46,7 @@ export const WelcomeTour = () => {
 
   const handleTourCallback = async (data: CallBackProps) => {
     const { status } = data;
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await supabase
