@@ -29,3 +29,14 @@ export const checkSupabaseHealth = async () => {
     return false;
   }
 };
+
+// Helper function to check authentication status
+export const checkAuthStatus = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session?.user;
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    return false;
+  }
+};
