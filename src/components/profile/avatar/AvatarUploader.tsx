@@ -16,6 +16,8 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log("Starting file upload process");
+
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
@@ -27,6 +29,7 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
       return;
     }
 
+    // Validate file size (2MB limit)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Error",
@@ -39,12 +42,18 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     setIsUploading(true);
     
     try {
-      // First, delete any existing files
-      const { data: oldFiles } = await supabase.storage
+      console.log("Checking for existing files");
+      const { data: oldFiles, error: listError } = await supabase.storage
         .from("profile_images")
         .list(userId);
 
+      if (listError) {
+        console.error("Error listing old files:", listError);
+        throw listError;
+      }
+
       if (oldFiles?.length) {
+        console.log("Deleting old files");
         await Promise.all(
           oldFiles.map((oldFile) =>
             supabase.storage
@@ -54,30 +63,41 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
         );
       }
 
-      // Upload new file
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
 
+      console.log("Uploading new file:", filePath);
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
-      // Get the public URL
+      console.log("Getting public URL");
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
         .getPublicUrl(filePath);
 
-      // Update profile
+      console.log("Updating profile with new URL:", publicUrl);
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
         .eq("id", userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw updateError;
+      }
 
+      console.log("Upload complete, calling onUploadComplete");
       onUploadComplete(publicUrl);
       
       toast({
@@ -85,7 +105,7 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
         description: "Profile picture updated successfully",
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error in upload process:", error);
       toast({
         title: "Error",
         description: "Failed to upload image. Please try again.",
