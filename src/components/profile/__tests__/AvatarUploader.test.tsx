@@ -29,10 +29,13 @@ vi.mock("@/lib/supabase", () => ({
         createSignedUploadUrl: vi.fn(),
         info: vi.fn(),
         exists: vi.fn(),
-        remove: vi.fn(),
-        list: vi.fn(),
-        upload: vi.fn(),
         listBuckets: vi.fn(),
+        // Add missing internal methods
+        encodeMetadata: vi.fn(),
+        toBase64: vi.fn(),
+        _getFinalPath: vi.fn(),
+        _removeEmptyFolders: vi.fn(),
+        transformOptsToQueryString: vi.fn(),
       })),
     },
     from: vi.fn(() => ({
@@ -106,14 +109,11 @@ describe("AvatarUploader", () => {
   });
 
   it("handles storage errors gracefully", async () => {
-    // Create a StorageError using the constructor
     const storageError = new StorageError("Storage error");
 
     // Mock storage error
     vi.mocked(supabase.storage.from).mockImplementationOnce(() => ({
       list: vi.fn(() => Promise.resolve({ data: null, error: storageError })),
-      upload: vi.fn(),
-      remove: vi.fn(),
       getPublicUrl: vi.fn(),
       // Add all required StorageFileApi properties
       url: "test-url",
@@ -131,10 +131,16 @@ describe("AvatarUploader", () => {
       createSignedUploadUrl: vi.fn(),
       info: vi.fn(),
       exists: vi.fn(),
-      remove: vi.fn(),
-      list: vi.fn(),
-      upload: vi.fn(),
       listBuckets: vi.fn(),
+      // Add missing internal methods
+      encodeMetadata: vi.fn(),
+      toBase64: vi.fn(),
+      _getFinalPath: vi.fn(),
+      _removeEmptyFolders: vi.fn(),
+      transformOptsToQueryString: vi.fn(),
+      // Add required methods without duplication
+      upload: vi.fn(),
+      remove: vi.fn(),
     }));
 
     render(
