@@ -42,18 +42,12 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
     setIsUploading(true);
     
     try {
-      console.log("Checking for existing files");
-      const { data: oldFiles, error: listError } = await supabase.storage
+      // Delete existing files
+      const { data: oldFiles } = await supabase.storage
         .from("profile_images")
         .list(userId);
 
-      if (listError) {
-        console.error("Error listing old files:", listError);
-        throw listError;
-      }
-
       if (oldFiles?.length) {
-        console.log("Deleting old files");
         await Promise.all(
           oldFiles.map((oldFile) =>
             supabase.storage
@@ -63,41 +57,34 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
         );
       }
 
+      // Upload new file
+      const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
+      const filePath = `${userId}/${timestamp}.${fileExt}`;
 
-      console.log("Uploading new file:", filePath);
       const { error: uploadError } = await supabase.storage
         .from("profile_images")
         .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
+          cacheControl: 'no-cache',
+          upsert: true,
           contentType: file.type
         });
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      console.log("Getting public URL");
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("profile_images")
         .getPublicUrl(filePath);
 
-      console.log("Updating profile with new URL:", publicUrl);
+      // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
         .eq("id", userId);
 
-      if (updateError) {
-        console.error("Profile update error:", updateError);
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
-      console.log("Upload complete, calling onUploadComplete");
       onUploadComplete(publicUrl);
       
       toast({
@@ -138,6 +125,7 @@ export const AvatarUploader = ({ userId, onUploadComplete }: AvatarUploaderProps
         onChange={handleFileChange}
         className="hidden"
         disabled={isUploading}
+        data-testid="avatar-upload-input"
       />
     </label>
   );

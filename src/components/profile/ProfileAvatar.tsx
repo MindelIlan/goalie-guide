@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarUploader } from "./avatar/AvatarUploader";
-import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 interface ProfileAvatarProps {
   userId: string;
@@ -10,6 +12,7 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvatarProps) => {
   const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,15 +26,30 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
     } else {
       setCurrentUrl(null);
     }
+    setIsLoading(true);
   }, [avatarUrl]);
 
   const handleImageError = () => {
     console.error("Error loading image:", currentUrl);
     setImageError(true);
+    setIsLoading(false);
+    toast({
+      title: "Error",
+      description: "Failed to load profile picture. Please try uploading again.",
+      variant: "destructive",
+    });
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setImageError(false);
   };
 
   return (
     <div className="relative inline-block">
+      {isLoading && !imageError && (
+        <Skeleton className="h-24 w-24 rounded-full" />
+      )}
       <Avatar className="h-24 w-24">
         {!imageError && currentUrl ? (
           <AvatarImage 
@@ -39,6 +57,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
             alt="Profile picture"
             className="object-cover"
             onError={handleImageError}
+            onLoad={handleImageLoad}
           />
         ) : (
           <AvatarFallback>
@@ -50,6 +69,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
         userId={userId}
         onUploadComplete={(url) => {
           setImageError(false);
+          setIsLoading(true);
           onAvatarChange?.(url);
         }}
       />
