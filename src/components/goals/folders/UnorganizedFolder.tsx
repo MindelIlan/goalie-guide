@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Folder } from "lucide-react";
+import { Shuffle } from "lucide-react";
 
 interface UnorganizedFolderProps {
   isSelected: boolean;
@@ -26,9 +26,9 @@ export const UnorganizedFolder = forwardRef<HTMLDivElement, UnorganizedFolderPro
         className="w-full h-full flex flex-col justify-between p-4"
         onClick={onSelect}
       >
-        <div className="flex items-center">
-          <Folder className="h-6 w-6 mr-2" />
-          Unorganized Goals
+        <div className="flex items-center justify-center space-x-2">
+          <Shuffle className="h-8 w-8 text-muted-foreground animate-[wiggle_4s_ease-in-out_infinite]" />
+          <span>Unorganized Goals</span>
         </div>
         <div className="w-full space-y-2 mt-4">
           <div className="flex justify-between text-sm">
