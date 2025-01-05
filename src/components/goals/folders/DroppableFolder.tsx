@@ -17,10 +17,17 @@ import {
   Dumbbell,
   Brain,
   GraduationCap,
-  Trash2
+  Trash2,
+  ChevronDown
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useState } from "react";
 
 interface FolderStats {
   totalGoals: number;
@@ -70,6 +77,7 @@ export const DroppableFolder = ({
     id: `folder-${folder.id}`,
     data: folder,
   });
+  const [isOpen, setIsOpen] = useState(false);
 
   const FolderIcon = getFolderIcon(folder.name);
 
@@ -84,57 +92,72 @@ export const DroppableFolder = ({
       transition={{ duration: 0.2 }}
       className={`
         group
-        aspect-square p-4 rounded-lg transition-all duration-200
+        p-4 rounded-lg transition-all duration-200
         ${isSelected ? 'bg-secondary/10' : 'bg-background hover:bg-secondary/5'}
         ${isOver ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : 'border border-border'}
         relative
       `}
     >
-      <Button
-        variant={isSelected ? "secondary" : "ghost"}
-        className="w-full h-full flex flex-col justify-between p-4 group relative overflow-hidden"
-        onClick={onSelect}
-      >
-        <div className="flex items-center justify-between w-full relative z-10">
-          <span className="flex items-center">
-            <FolderIcon className={`h-6 w-6 mr-2 transition-transform group-hover:scale-110 ${isOver ? 'text-primary animate-bounce' : ''}`} />
-            {folder.name}
-          </span>
-          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </div>
-
-        <div className="w-full space-y-2 mt-4 relative z-10">
-          <div className="flex justify-between text-sm">
-            <span>{stats.totalGoals} goals</span>
-            <span>{stats.averageProgress}%</span>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="flex items-center justify-between">
+          <Button
+            variant={isSelected ? "secondary" : "ghost"}
+            className="flex-1 flex items-center justify-between p-4 group relative overflow-hidden"
+            onClick={onSelect}
+          >
+            <span className="flex items-center">
+              <FolderIcon className={`h-6 w-6 mr-2 transition-transform group-hover:scale-110 ${isOver ? 'text-primary animate-bounce' : ''}`} />
+              {folder.name}
+            </span>
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
           </div>
-          <Progress 
-            value={stats.averageProgress} 
-            className="h-1.5"
-          />
         </div>
 
-        {isOver && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.1 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-primary"
-          />
-        )}
-      </Button>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+        <CollapsibleContent className="space-y-4">
+          <div className="w-full space-y-2 mt-4 relative z-10 px-4">
+            <div className="flex justify-between text-sm">
+              <span>{stats.totalGoals} goals</span>
+              <span>{stats.averageProgress}%</span>
+            </div>
+            <Progress 
+              value={stats.averageProgress} 
+              className="h-1.5"
+            />
+          </div>
+          
+          <div className="px-4 py-2 text-sm text-muted-foreground">
+            Click to view goals in this folder
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {isOver && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.1 }}
+          transition={{ duration: 0.2 }}
+          className="absolute inset-0 bg-primary rounded-lg"
+        />
+      )}
     </motion.div>
   );
 };
