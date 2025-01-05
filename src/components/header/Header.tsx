@@ -53,7 +53,7 @@ export const Header = ({ user }: HeaderProps) => {
       <div className="flex items-center gap-2">
         <NotificationsPopover />
         <Button 
-          variant="destructive"
+          variant="primary"
           onClick={handleSignOut} 
           className="gap-2"
         >
