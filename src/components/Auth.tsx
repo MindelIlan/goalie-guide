@@ -45,11 +45,13 @@ export const Auth = () => {
       // Create welcome notification for new user
       if (user) {
         await createWelcomeNotification(user.id);
+        // Automatically navigate to home page after successful signup
+        navigate('/');
       }
 
       toast({
         title: t.signUp,
-        description: language === 'he' ? 'בדוק את האימייל שלך לקישור האימות!' : 'Check your email for the verification link!',
+        description: language === 'he' ? 'נרשמת בהצלחה!' : 'Successfully signed up!',
       });
     } catch (error) {
       let message = t.errors.signUpError;
