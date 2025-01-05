@@ -10,16 +10,16 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvatarProps) => {
   const [imageError, setImageError] = useState(false);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState(avatarUrl);
 
   useEffect(() => {
-    console.log("Avatar URL updated:", avatarUrl);
-    setCurrentAvatarUrl(avatarUrl);
-    setImageError(false);
+    console.log("Avatar URL in ProfileAvatar:", avatarUrl);
+    if (avatarUrl) {
+      setImageError(false);
+    }
   }, [avatarUrl]);
 
   const handleImageError = () => {
-    console.error("Avatar image failed to load:", currentAvatarUrl);
+    console.error("Avatar image failed to load:", avatarUrl);
     setImageError(true);
   };
 
@@ -27,7 +27,7 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
     <div className="relative inline-block">
       <Avatar className="h-24 w-24">
         <AvatarImage 
-          src={!imageError ? (currentAvatarUrl || "") : ""}
+          src={!imageError && avatarUrl ? avatarUrl : ""}
           alt="Profile picture"
           className="object-cover"
           onError={handleImageError}
@@ -41,7 +41,6 @@ export const ProfileAvatar = ({ userId, avatarUrl, onAvatarChange }: ProfileAvat
         onUploadComplete={(url) => {
           console.log("Upload completed with URL:", url);
           setImageError(false);
-          setCurrentAvatarUrl(url);
           onAvatarChange?.(url);
         }}
       />
