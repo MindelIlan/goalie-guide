@@ -2,7 +2,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Button } from "@/components/ui/button";
 import { 
   Folder, 
-  ChevronRight, 
+  ChevronDown,
   Target, 
   Briefcase, 
   Star, 
@@ -17,8 +17,7 @@ import {
   Dumbbell,
   Brain,
   GraduationCap,
-  Trash2,
-  ChevronDown
+  Trash2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
