@@ -28,7 +28,7 @@ export const UnorganizedFolder = forwardRef<HTMLDivElement, UnorganizedFolderPro
       >
         <div className="flex items-center">
           <Folder className="h-6 w-6 mr-2" />
-          Unorganized Goals
+          All Goals
         </div>
         <div className="w-full space-y-2 mt-4">
           <div className="flex justify-between text-sm">
