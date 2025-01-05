@@ -9,6 +9,7 @@ import { GoalsContainer } from "@/components/goals/GoalsContainer";
 import { AIAssistant } from "@/components/AIAssistant";
 import { GoalsProvider } from "@/contexts/GoalsContext";
 import { WelcomeTour } from "@/components/tour/WelcomeTour";
+import { Profile } from "@/components/Profile";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -74,12 +75,20 @@ const Index = () => {
       <GoalsProvider>
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
           <div className="container max-w-4xl px-4">
-            <Header user={user} />
+            <div className="header-section">
+              <Header user={user} />
+            </div>
             
-            <GoalsContainer
-              userId={user.id}
-              onAddGoal={handleAddGoal}
-            />
+            <div className="profile-section mb-8">
+              <Profile userId={user.id} />
+            </div>
+
+            <div className="goals-container">
+              <GoalsContainer
+                userId={user.id}
+                onAddGoal={handleAddGoal}
+              />
+            </div>
           </div>
 
           <AIAssistant />

@@ -4,6 +4,25 @@ import { supabase } from '@/lib/supabase';
 
 export const WelcomeTour = () => {
   const [run, setRun] = useState(false);
+  const [steps] = useState<Step[]>([
+    {
+      target: '.header-section',
+      content: 'Welcome to your goal tracking dashboard! Here you can manage all your goals.',
+      disableBeacon: true,
+    },
+    {
+      target: '.profile-section',
+      content: 'Complete your profile to get personalized goal suggestions.',
+    },
+    {
+      target: '.goals-container',
+      content: 'This is where all your goals will be displayed. You can organize them into folders and track your progress.',
+    },
+    {
+      target: '.add-goal-button',
+      content: 'Click here to create a new goal and start tracking your progress!',
+    },
+  ]);
 
   useEffect(() => {
     const checkFirstVisit = async () => {
@@ -17,32 +36,13 @@ export const WelcomeTour = () => {
         .single();
 
       if (profile && !profile.has_completed_tour) {
-        setRun(true);
+        // Delay the start of the tour to ensure elements are mounted
+        setTimeout(() => setRun(true), 1000);
       }
     };
 
     checkFirstVisit();
   }, []);
-
-  const steps: Step[] = [
-    {
-      target: '.goals-header',
-      content: 'Welcome to your goal tracking dashboard! Here you can manage all your goals.',
-      disableBeacon: true,
-    },
-    {
-      target: '.folders-section',
-      content: 'Organize your goals into folders to keep them structured.',
-    },
-    {
-      target: '.add-goal-button',
-      content: 'Click here to create a new goal and start tracking your progress!',
-    },
-    {
-      target: '.goals-list',
-      content: 'Your goals will appear here. Click on them to see details and track progress.',
-    },
-  ];
 
   const handleTourCallback = async (data: CallBackProps) => {
     const { status } = data;
@@ -69,6 +69,17 @@ export const WelcomeTour = () => {
         options: {
           primaryColor: '#0D9488',
           textColor: '#27272a',
+          zIndex: 1000,
+        },
+        tooltip: {
+          backgroundColor: 'white',
+          textAlign: 'left',
+        },
+        buttonNext: {
+          backgroundColor: '#0D9488',
+        },
+        buttonBack: {
+          color: '#0D9488',
         },
       }}
       callback={handleTourCallback}
