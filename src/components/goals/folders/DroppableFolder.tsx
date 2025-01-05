@@ -80,6 +80,11 @@ export const DroppableFolder = ({
 
   const FolderIcon = getFolderIcon(folder.name);
 
+  const handleFolderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect();
+  };
+
   return (
     <motion.div 
       ref={setNodeRef}
@@ -94,27 +99,22 @@ export const DroppableFolder = ({
         p-4 rounded-lg transition-all duration-200
         ${isSelected ? 'bg-secondary/10' : 'bg-background hover:bg-secondary/5'}
         ${isOver ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : 'border border-border'}
-        relative
+        relative cursor-pointer
       `}
+      onClick={handleFolderClick}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="flex items-center justify-between">
-          <Button
-            variant={isSelected ? "secondary" : "ghost"}
-            className="flex-1 flex items-center justify-between p-4 group relative overflow-hidden"
-            onClick={onSelect}
-          >
-            <span className="flex items-center">
-              <FolderIcon className={`h-6 w-6 mr-2 transition-transform group-hover:scale-110 ${isOver ? 'text-primary animate-bounce' : ''}`} />
-              {folder.name}
-            </span>
-          </Button>
+          <div className="flex items-center space-x-2 flex-1">
+            <FolderIcon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isOver ? 'text-primary animate-bounce' : ''}`} />
+            <span>{folder.name}</span>
+          </div>
           
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+              className="opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/80 hover:bg-destructive hover:text-destructive-foreground h-8 w-8"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
@@ -123,14 +123,14 @@ export const DroppableFolder = ({
               <Trash2 className="h-4 w-4" />
             </Button>
             
-            <CollapsibleTrigger asChild>
+            <CollapsibleTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button 
                 variant="ghost" 
                 size="icon"
                 className="h-8 w-8 p-0 hover:bg-secondary/10"
               >
                 <ChevronDown 
-                  className={`h-5 w-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
               </Button>
             </CollapsibleTrigger>
