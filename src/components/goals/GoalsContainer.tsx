@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ProfileContainer } from "./containers/ProfileContainer";
 import { GoalsList } from "@/components/GoalsList";
 import { GoalsHeader } from "./GoalsHeader";
 import { DuplicateGoalsDialog } from "./DuplicateGoalsDialog";
@@ -43,7 +42,6 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   useEffect(() => {
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('goals_changes')
       .on(
@@ -60,7 +58,6 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
     return () => {
       supabase.removeChannel(channel);
     };
@@ -110,7 +107,6 @@ export const GoalsContainer = ({ userId, onAddGoal }: GoalsContainerProps) => {
 
   return (
     <>
-      <ProfileContainer userId={userId} />
       <GoalsStats {...stats} />
 
       <DndContext onDragEnd={handleDragEnd}>
