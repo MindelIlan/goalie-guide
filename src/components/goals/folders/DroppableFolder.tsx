@@ -124,8 +124,14 @@ export const DroppableFolder = ({
             </Button>
             
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8 p-0 hover:bg-secondary/10"
+              >
+                <ChevronDown 
+                  className={`h-5 w-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                />
               </Button>
             </CollapsibleTrigger>
           </div>
