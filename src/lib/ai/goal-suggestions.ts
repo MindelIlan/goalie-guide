@@ -44,6 +44,11 @@ export const generateGoalSuggestions = async (description: string): Promise<Goal
       }));
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
+      toast({
+        title: "Error",
+        description: "Failed to parse AI response. Please try again.",
+        variant: "destructive",
+      });
       throw new Error("Failed to parse OpenAI response");
     }
 
@@ -51,7 +56,7 @@ export const generateGoalSuggestions = async (description: string): Promise<Goal
     console.error('Goal suggestion error:', error);
     toast({
       title: "Error",
-      description: "Failed to generate goal suggestions. Please try again later.",
+      description: error instanceof Error ? error.message : "Failed to generate goal suggestions. Please try again later.",
       variant: "destructive",
     });
     throw error;

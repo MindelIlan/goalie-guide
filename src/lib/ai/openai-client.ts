@@ -10,25 +10,28 @@ export const getOpenAIClient = async () => {
       throw new Error("User not authenticated");
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('openai_api_key')
       .eq('id', session.user.id)
       .maybeSingle();
 
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+
     let apiKey = profile?.openai_api_key;
 
     // If no key in profile, try to get from Supabase secrets
     if (!apiKey) {
-      const { data: secretData, error } = await supabase
+      const { data: secretData, error: secretError } = await supabase
         .from('secrets')
         .select('secret')
         .eq('name', 'OPENAI_API_KEY')
         .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching OpenAI API key:', error);
-        throw new Error("Failed to fetch OpenAI API key");
+      if (secretError) {
+        console.error('Error fetching OpenAI API key:', secretError);
       }
       
       apiKey = secretData?.secret;
@@ -40,15 +43,20 @@ export const getOpenAIClient = async () => {
         description: "Please add your OpenAI API key in the settings to use AI features.",
         variant: "destructive",
       });
-      throw new Error("OpenAI API key not found");
+      throw new Error("OpenAI API key not found. Please add your API key in the settings.");
     }
 
     return new OpenAI({
       apiKey: apiKey,
-      dangerouslyAllowBrowser: true // Required for client-side usage
+      dangerouslyAllowBrowser: true
     });
   } catch (error) {
     console.error('OpenAI client error:', error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to initialize OpenAI client",
+      variant: "destructive",
+    });
     throw error;
   }
 };
