@@ -14,22 +14,32 @@ export const getOpenAIClient = async () => {
       .from('profiles')
       .select('openai_api_key')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
 
     let apiKey = profile?.openai_api_key;
 
     // If no key in profile, try to get from Supabase secrets
     if (!apiKey) {
-      const { data: secretData } = await supabase
+      const { data: secretData, error } = await supabase
         .from('secrets')
         .select('secret')
         .eq('name', 'OPENAI_API_KEY')
-        .single();
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching OpenAI API key:', error);
+        throw new Error("Failed to fetch OpenAI API key");
+      }
       
       apiKey = secretData?.secret;
     }
 
     if (!apiKey) {
+      toast({
+        title: "OpenAI API Key Required",
+        description: "Please add your OpenAI API key in the settings to use AI features.",
+        variant: "destructive",
+      });
       throw new Error("OpenAI API key not found");
     }
 
