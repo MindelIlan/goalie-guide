@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { GoalsList } from "../../GoalsList";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { Goal } from "@/types/goals";
 
 describe("GoalsList", () => {
-  const mockGoals = [
+  const mockGoals: Goal[] = [
     {
       id: 1,
       title: "Test Goal 1",
@@ -12,6 +13,8 @@ describe("GoalsList", () => {
       target_date: "2024-12-31",
       tags: ["test"],
       created_at: "2024-01-01",
+      folder_id: null,
+      user_id: "test-user-id"
     },
     {
       id: 2,
@@ -21,14 +24,16 @@ describe("GoalsList", () => {
       target_date: "2024-12-31",
       tags: ["test"],
       created_at: "2024-01-01",
+      folder_id: 1,
+      user_id: "test-user-id"
     },
   ];
 
   const defaultProps = {
     goals: mockGoals,
     setGoals: vi.fn(),
-    duplicateGoals: new Set(),
-    folderName: null,
+    duplicateGoals: new Set<number>(),
+    folderName: null as string | null,
   };
 
   beforeEach(() => {
@@ -37,29 +42,25 @@ describe("GoalsList", () => {
 
   it("renders goals list with correct number of goals", () => {
     render(<GoalsList {...defaultProps} />);
-    
     const goals = screen.getAllByRole("article");
     expect(goals).toHaveLength(mockGoals.length);
   });
 
   it("displays empty state when no goals are present", () => {
-    render(<GoalsList {...defaultProps} goals={[]} />);
-    
+    render(<GoalsList {...defaultProps} goals={[]} duplicateGoals={new Set<number>()} />);
     expect(screen.getByText(/no goals/i)).toBeInTheDocument();
   });
 
   it("handles bulk selection of goals", () => {
     render(<GoalsList {...defaultProps} />);
-    
     const goals = screen.getAllByRole("article");
     fireEvent.click(goals[0], { ctrlKey: true });
-    
     expect(goals[0]).toHaveClass("border-primary");
   });
 
   it("shows folder name when provided", () => {
-    render(<GoalsList {...defaultProps} folderName="Test Folder" />);
-    
-    expect(screen.getByText("Test Folder")).toBeInTheDocument();
+    const folderName = "Test Folder";
+    render(<GoalsList {...defaultProps} folderName={folderName} />);
+    expect(screen.getByText(folderName)).toBeInTheDocument();
   });
 });
