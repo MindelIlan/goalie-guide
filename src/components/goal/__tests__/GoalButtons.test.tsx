@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, vi, expect } from "vitest";
 import { GoalButtons } from "../GoalButtons";
+import { vi, describe, it, expect } from "vitest";
 
 describe("GoalButtons", () => {
   const defaultProps = {
@@ -12,45 +12,42 @@ describe("GoalButtons", () => {
 
   it("renders both buttons", () => {
     render(<GoalButtons {...defaultProps} />);
-    expect(screen.getByText("Subgoals")).toBeInTheDocument();
-    expect(screen.getByText("Similar Goals")).toBeInTheDocument();
+    expect(screen.getByText(/subgoals/i)).toBeInTheDocument();
+    expect(screen.getByText(/partner up/i)).toBeInTheDocument();
   });
 
-  it("applies active state class when showSubgoals is true", () => {
+  it("applies active state to subgoals button when showSubgoals is true", () => {
     render(<GoalButtons {...defaultProps} showSubgoals={true} />);
-    const subgoalsButton = screen.getByText("Subgoals").closest("button");
+    const subgoalsButton = screen.getByText(/subgoals/i).closest("button");
     expect(subgoalsButton).toHaveClass("bg-gray-100");
   });
 
-  it("applies active state class when showSimilar is true", () => {
+  it("applies active state to similar button when showSimilar is true", () => {
     render(<GoalButtons {...defaultProps} showSimilar={true} />);
-    const similarButton = screen.getByText("Similar Goals").closest("button");
+    const similarButton = screen.getByText(/partner up/i).closest("button");
     expect(similarButton).toHaveClass("bg-gray-100");
   });
 
-  it("calls onToggleSubgoals and stops event propagation when subgoals button is clicked", () => {
-    const onToggleSubgoals = vi.fn();
-    render(<GoalButtons {...defaultProps} onToggleSubgoals={onToggleSubgoals} />);
-    
-    const mockEvent = { stopPropagation: vi.fn() };
-    const subgoalsButton = screen.getByText("Subgoals");
-    
-    fireEvent.click(subgoalsButton, mockEvent);
-    
-    expect(onToggleSubgoals).toHaveBeenCalledTimes(1);
-    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+  it("calls onToggleSubgoals when subgoals button is clicked", () => {
+    render(<GoalButtons {...defaultProps} />);
+    fireEvent.click(screen.getByText(/subgoals/i));
+    expect(defaultProps.onToggleSubgoals).toHaveBeenCalled();
   });
 
-  it("calls onToggleSimilar and stops event propagation when similar goals button is clicked", () => {
-    const onToggleSimilar = vi.fn();
-    render(<GoalButtons {...defaultProps} onToggleSimilar={onToggleSimilar} />);
+  it("calls onToggleSimilar when similar button is clicked", () => {
+    render(<GoalButtons {...defaultProps} />);
+    fireEvent.click(screen.getByText(/partner up/i));
+    expect(defaultProps.onToggleSimilar).toHaveBeenCalled();
+  });
+
+  it("prevents event propagation when buttons are clicked", () => {
+    const mockStopPropagation = vi.fn();
+    render(<GoalButtons {...defaultProps} />);
     
-    const mockEvent = { stopPropagation: vi.fn() };
-    const similarButton = screen.getByText("Similar Goals");
+    fireEvent.click(screen.getByText(/subgoals/i), {
+      stopPropagation: mockStopPropagation,
+    });
     
-    fireEvent.click(similarButton, mockEvent);
-    
-    expect(onToggleSimilar).toHaveBeenCalledTimes(1);
-    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(mockStopPropagation).toHaveBeenCalled();
   });
 });

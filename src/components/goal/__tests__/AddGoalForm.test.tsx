@@ -3,14 +3,19 @@ import { AddGoalForm } from "../AddGoalForm";
 import { vi, describe, it, expect } from "vitest";
 
 describe("AddGoalForm", () => {
-  const mockProps = {
+  const mockFolders = [
+    { id: 1, name: "Work", description: "Work goals" },
+    { id: 2, name: "Personal", description: "Personal goals" },
+  ];
+
+  const defaultProps = {
     title: "",
     description: "",
     target_date: "",
     tags: [],
     subgoals: [],
     selectedFolderId: null,
-    folders: [],
+    folders: mockFolders,
     onTitleChange: vi.fn(),
     onDescriptionChange: vi.fn(),
     onTargetDateChange: vi.fn(),
@@ -21,45 +26,56 @@ describe("AddGoalForm", () => {
   };
 
   it("renders all form fields", () => {
-    render(<AddGoalForm {...mockProps} />);
+    render(<AddGoalForm {...defaultProps} />);
     
     expect(screen.getByLabelText(/goal title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/target date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/folder/i)).toBeInTheDocument();
+    expect(screen.getByText(/tags/i)).toBeInTheDocument();
   });
 
-  it("calls onChange handlers when fields are updated", () => {
-    render(<AddGoalForm {...mockProps} />);
+  it("calls appropriate handlers when fields change", () => {
+    render(<AddGoalForm {...defaultProps} />);
     
-    const titleInput = screen.getByLabelText(/goal title/i);
-    fireEvent.change(titleInput, { target: { value: "New Goal" } });
-    expect(mockProps.onTitleChange).toHaveBeenCalledWith("New Goal");
+    fireEvent.change(screen.getByLabelText(/goal title/i), {
+      target: { value: "New Goal" },
+    });
+    expect(defaultProps.onTitleChange).toHaveBeenCalledWith("New Goal");
     
-    const descriptionInput = screen.getByLabelText(/description/i);
-    fireEvent.change(descriptionInput, { target: { value: "New Description" } });
-    expect(mockProps.onDescriptionChange).toHaveBeenCalledWith("New Description");
+    fireEvent.change(screen.getByLabelText(/description/i), {
+      target: { value: "New Description" },
+    });
+    expect(defaultProps.onDescriptionChange).toHaveBeenCalledWith("New Description");
+  });
+
+  it("shows folder options", () => {
+    render(<AddGoalForm {...defaultProps} />);
+    
+    const folderSelect = screen.getByLabelText(/folder/i);
+    mockFolders.forEach(folder => {
+      expect(screen.getByText(folder.name)).toBeInTheDocument();
+    });
   });
 
   it("calls onSubmit when form is submitted", () => {
-    render(<AddGoalForm {...mockProps} />);
+    render(<AddGoalForm {...defaultProps} />);
     
     const form = screen.getByRole("form");
     fireEvent.submit(form);
     
-    expect(mockProps.onSubmit).toHaveBeenCalled();
+    expect(defaultProps.onSubmit).toHaveBeenCalled();
   });
 
-  it("shows folder options when folders are provided", () => {
-    const folders = [
-      { id: 1, name: "Folder 1", description: null },
-      { id: 2, name: "Folder 2", description: null },
-    ];
+  it("validates required fields", () => {
+    render(<AddGoalForm {...defaultProps} />);
     
-    render(<AddGoalForm {...mockProps} folders={folders} />);
+    const titleInput = screen.getByLabelText(/goal title/i);
+    const descriptionInput = screen.getByLabelText(/description/i);
+    const targetDateInput = screen.getByLabelText(/target date/i);
     
-    folders.forEach(folder => {
-      expect(screen.getByText(folder.name)).toBeInTheDocument();
-    });
+    expect(titleInput).toBeRequired();
+    expect(descriptionInput).toBeRequired();
+    expect(targetDateInput).toBeRequired();
   });
 });
