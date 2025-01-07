@@ -6,35 +6,31 @@ export const getOpenAIClient = async () => {
   try {
     // First try to get the API key from the user's profile
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
+    if (!session?.user) {
       throw new Error("User not authenticated");
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('openai_api_key')
       .eq('id', session.user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-    }
+      .single();
 
     let apiKey = profile?.openai_api_key;
 
-    // If no key in profile, try to get from Supabase secrets
+    // If no key in profile, try getting it from secrets
     if (!apiKey) {
       const { data: secretData, error: secretError } = await supabase
         .from('secrets')
         .select('secret')
         .eq('name', 'OPENAI_API_KEY')
         .maybeSingle();
-      
+
       if (secretError) {
-        console.error('Error fetching OpenAI API key:', secretError);
+        console.error('Error fetching OpenAI API key from secrets:', secretError);
+      } else {
+        apiKey = secretData?.secret;
       }
-      
-      apiKey = secretData?.secret;
     }
 
     if (!apiKey) {
@@ -57,26 +53,42 @@ export const getOpenAIClient = async () => {
     try {
       await openai.chat.completions.create({
         messages: [{ role: 'system', content: 'Test' }],
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         max_tokens: 5
       });
       console.log('OpenAI API key verified successfully');
-    } catch (verifyError) {
+    } catch (verifyError: any) {
       console.error('OpenAI API key verification failed:', verifyError);
+      let errorMessage = "The provided API key appears to be invalid.";
+      
+      if (verifyError?.status === 401) {
+        errorMessage = "Invalid API key. Please check your settings.";
+      } else if (verifyError?.status === 429) {
+        errorMessage = "Rate limit exceeded. Please try again later.";
+      }
+      
       toast({
         title: "OpenAI API Key Error",
-        description: "The provided API key appears to be invalid. Please check your settings.",
+        description: errorMessage,
         variant: "destructive",
       });
-      throw new Error("Invalid OpenAI API key");
+      throw new Error(`Invalid OpenAI API key: ${errorMessage}`);
     }
 
     return openai;
-  } catch (error) {
+  } catch (error: any) {
     console.error('OpenAI client error:', error);
+    let errorMessage = "Failed to initialize OpenAI client.";
+    
+    if (error.message.includes("not authenticated")) {
+      errorMessage = "Please sign in to use AI features.";
+    } else if (error.message.includes("API key not found")) {
+      errorMessage = "Please add your OpenAI API key in settings.";
+    }
+    
     toast({
       title: "Error",
-      description: error instanceof Error ? error.message : "Failed to initialize OpenAI client",
+      description: errorMessage,
       variant: "destructive",
     });
     throw error;
