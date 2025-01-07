@@ -23,14 +23,12 @@ describe("FoldersList", () => {
       id: 1,
       name: "Work",
       description: "Work related goals",
-      user_id: "test-user-id",
       created_at: new Date().toISOString(),
     },
     {
       id: 2,
       name: "Personal",
       description: "Personal goals",
-      user_id: "test-user-id",
       created_at: new Date().toISOString(),
     },
   ];
