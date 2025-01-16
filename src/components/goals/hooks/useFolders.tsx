@@ -30,7 +30,15 @@ export const useFolders = () => {
           variant: "destructive",
         });
       } else {
-        setFolders(data || []);
+        // Ensure all required fields are present
+        const validFolders = data?.map(folder => ({
+          id: folder.id,
+          name: folder.name,
+          description: folder.description,
+          created_at: folder.created_at,
+        })) || [];
+        
+        setFolders(validFolders);
       }
     } catch (err) {
       console.error('Unexpected error fetching folders:', err);
