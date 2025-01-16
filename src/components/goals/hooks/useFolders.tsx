@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-
-interface Folder {
-  id: number;
-  name: string;
-  description: string | null;
-}
+import { Folder } from "@/types/goals";
 
 export const useFolders = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
